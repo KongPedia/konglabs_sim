@@ -6,6 +6,8 @@ import time
 import math
 import argparse
 from isaaclab.app import AppLauncher
+
+
 # add argparse arguments
 parser = argparse.ArgumentParser(description="Unitree go2 ros2 setup")
 
@@ -29,24 +31,22 @@ from isaaclab.sim import SimulationContext
 from go2.go2_env import go2_rl_env, Go2RLEnvCfg
 
 
-
-    
-
-
-
-
 FILE_PATH = os.path.join(os.path.dirname(__file__), "config")
 @hydra.main(config_path=FILE_PATH, config_name="sim", version_base=None)
 def run_simulator(cfg):
+    go2_env_cfg = Go2RLEnvCfg()
+    go2_env_cfg.decimation = math.ceil(1./go2_env_cfg.sim.dt/cfg.freq)
+    go2_env_cfg.sim.render_interval = go2_env_cfg.decimation
 
-    env, policy = go2_rl_env(Go2RLEnvCfg(), cfg)
-    obs, _ = env.get_observations()
-    sim = env.unwrapped.sim 
-    sim.set_camera_view([2.5, 0.0, 4.0], [0.0, 0.0, 2.0])
+    env, policy = go2_rl_env(go2_env_cfg, cfg)
+    
+    #run simulation
+    dt = float(go2_env_cfg.sim.dt * go2_env_cfg.decimation)
+    obs, _ = env.reset()
+
 
     print("[INFO]: simulation started")
-    
-    dt = env.unwrapped.step_dt
+
 
     while simulation_app.is_running():
         start_time = time.time()
@@ -54,11 +54,15 @@ def run_simulator(cfg):
                 actions = policy(obs)
                 obs, _, _, _ = env.step(actions)
 
-        sleep_time = dt - (time.time() - start_time)
+        elapsed_time = time.time() - start_time
+
+        sleep_time = dt - (elapsed_time)
         
         if sleep_time > 0:
             time.sleep(sleep_time)
-
+        actual_loop_time = time.time() - start_time
+        rtf = min(1.0, dt/elapsed_time)
+        print(f"\rStep time: {actual_loop_time*1000:.2f}ms, Real Time Factor: {rtf:.2f}", end='', flush=True)
     simulation_app.close()
 
 if __name__ == "__main__":

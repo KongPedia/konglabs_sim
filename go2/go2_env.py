@@ -160,15 +160,22 @@ class Go2RLEnvCfg(ManagerBasedRLEnvCfg):
 
     def __post_init__(self):
         """Post initialization."""
+        # viewer settings
+        self.viewer.eye = [-4.0, 0.0, 5.0]
+        self.viewer.lookat = [0.0, 0.0, 0.0]
+        
         # general settings
-        self.decimation = 4
-        self.episode_length_s = 20
+        self.decimation = 8
+        self.episode_length_s = 20.0
+        self.is_finite_horizon = False
+        self.actions.joint_pos.scale = 0.25
+
         # simulation settings
         self.sim.dt = 0.005
-        self.sim.render_interval = self.decimation * self.sim.dt
-        self.sim.physx.bounce_threshold_velocity = 0.2
-        self.sim.physx.friction_offset_threshold = 0.01
-        self.sim.physx.friction_correlation_distance = 0.005
+        self.sim.render_interval = self.decimation 
+        self.sim.disable_contact_processing = True
+        self.sim.render.antialiasing_mode = None
+
         if self.scene.height_scanner is not None:
             self.scene.height_scanner.update_period = self.decimation * self.sim.dt
 
