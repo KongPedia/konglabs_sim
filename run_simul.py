@@ -30,6 +30,7 @@ from isaaclab.sim import SimulationContext
 
 from go2.go2_env import go2_rl_env, Go2RLEnvCfg
 from envs.usdz_import import GS_import
+from go2.go2_sensors import sensor_manager
 
 FILE_PATH = os.path.join(os.path.dirname(__file__), "config")
 @hydra.main(config_path=FILE_PATH, config_name="sim", version_base=None)
@@ -39,11 +40,17 @@ def run_simulator(cfg):
     go2_env_cfg.sim.render_interval = go2_env_cfg.decimation
 
     env, policy = go2_rl_env(go2_env_cfg, cfg)
-    
+    time.sleep(10)
+
+    # Sensor setup
+    sm = sensor_manager(cfg.num_envs)
+    cameras = sm.create_camera()
+    lidar_annotators = sm.create_lidar()
+
+
     #run simulation
     dt = float(go2_env_cfg.sim.dt * go2_env_cfg.decimation)
     obs, _ = env.reset()
-
 
     print("[INFO]: simulation started")
 
