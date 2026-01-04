@@ -16,6 +16,7 @@ from isaaclab.managers import SceneEntityCfg
 from isaaclab_rl.rsl_rl import RslRlOnPolicyRunnerCfg, RslRlVecEnvWrapper, export_policy_as_jit, export_policy_as_onnx
 from rsl_rl.runners import OnPolicyRunner
 from isaaclab_tasks.utils import get_checkpoint_path
+from isaaclab.sensors import Camera, CameraCfg
 
 
 import gymnasium as gym
@@ -33,6 +34,20 @@ class Myscene(InteractiveSceneCfg):
     # 로봇 정의
     go2: ArticulationCfg = UNITREE_GO2_CFG.replace(prim_path="{ENV_REGEX_NS}/Go2")
 
+
+    front_cam = CameraCfg(
+        prim_path="{ENV_REGEX_NS}/Go2/base/front_cam",
+        update_period=0.0,                      
+        data_types=["rgb", "depth"],              
+        spawn=sim_utils.PinholeCameraCfg(),             
+        width=640,                                       
+        height=480,                                      
+        offset=CameraCfg.OffsetCfg(
+            pos=(0.5, 0.0, 0.1),                         
+            rot=(1.0, 0.0, 0.0, 0.0),                    
+            convention="world"                             
+        ),
+    )
     # 센서 정의
     height_scanner = RayCasterCfg(
         prim_path = "{ENV_REGEX_NS}/Go2/base",

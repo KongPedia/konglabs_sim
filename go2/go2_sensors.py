@@ -29,7 +29,9 @@ class sensor_manager:
                     convention="world"                             
                 ),
             )
+
             camera = Camera(cfg=camera_cfg)
+
             cameras.append(camera)
 
         return cameras
@@ -48,9 +50,9 @@ class sensor_manager:
                 "IsaacSensorCreateRtxLidar",
                 translation=Gf.Vec3d(0.0, 0.0, 0.0),
                 orientation=Gf.Quatd(1.0, 0.0, 0.0, 0.0),
-                path="/lidar",
+                path="lidar",
                 parent=f"/World/envs/env_{env_idx}/Go2/base",
-                config="Hesai_XT32_SD10",
+                config="Example_Rotary",
                 **sensor_attributes,
             )
             

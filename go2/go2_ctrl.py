@@ -2,7 +2,6 @@ import os
 import torch
 import carb
 from isaaclab.envs import ManagerBasedEnv
-from go2.go2_ctrl_cfg import unitree_go2_flat_cfg, unitree_go2_rough_cfg
 from isaaclab_rl.rsl_rl import RslRlVecEnvWrapper, RslRlOnPolicyRunnerCfg
 from isaaclab_tasks.utils import get_checkpoint_path
 from rsl_rl.runners import OnPolicyRunner

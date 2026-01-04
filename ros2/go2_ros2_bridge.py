@@ -18,7 +18,7 @@ import time
 import go2.go2_ctrl as go2_ctrl
 
 ext_manager = omni.kit.app.get_app().get_extension_manager()
-ext_manager.set_extension_enabled_immediate("omni.isaac.ros2_bridge", True)
+ext_manager.set_extension_enabled_immediate("isaacsim.ros2.bridge", True)
 from isaacsim.ros2.bridge import collect_namespace, read_camera_info
 
 
@@ -275,7 +275,7 @@ class RobotDataManager(Node):
         self.lidar_pub[env_idx].publish(point_cloud)        
 
     def pub_ros2_data_callback(self):
-        robot_data = self.env.unwrapped.scene["unitree_go2"].data
+        robot_data = self.env.unwrapped.scene["go2"].data
         for i in range(self.num_envs):
             self.publish_odom(robot_data.root_state_w[i, :3],
                               robot_data.root_state_w[i, 3:7],
@@ -285,9 +285,22 @@ class RobotDataManager(Node):
             self.publish_pose(robot_data.root_state_w[i, :3],
                               robot_data.root_state_w[i, 3:7], i)
 
+    # def pub_lidar_data_callback(self):
+    #     for i in range(self.num_envs):
+    #         self.publish_lidar_data(self.lidar_annotators[i].get_data()["data"].reshape(-1, 3), i)
+
     def pub_lidar_data_callback(self):
         for i in range(self.num_envs):
-            self.publish_lidar_data(self.lidar_annotators[i].get_data()["data"].reshape(-1, 3), i)
+            # 데이터 가져오기
+            data = self.lidar_annotators[i].get_data()
+            
+            # 데이터가 유효한지 확인
+            if data is not None and "data" in data:
+                points = data["data"].reshape(-1, 3) # (N, 3) 형태의 numpy/torch 텐서 [4]
+                self.publish_lidar_data(points, i)
+            else:
+                # 아직 데이터가 준비되지 않은 경우 스킵
+                continue
 
     def pub_ros2_data(self):
         pub_odom_pose = False
@@ -302,7 +315,7 @@ class RobotDataManager(Node):
 
         if (pub_odom_pose):
             self.odom_pose_pub_time = time.time()
-            robot_data = self.env.unwrapped.scene["unitree_go2"].data
+            robot_data = self.env.unwrapped.scene["go2"].data
             for i in range(self.num_envs):
                 self.publish_odom(robot_data.root_state_w[i, :3],
                                 robot_data.root_state_w[i, 3:7],
@@ -415,7 +428,7 @@ class RobotDataManager(Node):
     def pub_color_image(self):
         for i in range(self.num_envs):
             # The following code will link the camera's render product and publish the data to the specified topic name.
-            render_product = self.cameras[i]._render_product_path
+            render_product = self.cameras.render_product_paths[i]
             step_size = 1
             if (self.num_envs == 1):
                 topic_name = "unitree_go2/front_cam/color_image"
@@ -446,7 +459,7 @@ class RobotDataManager(Node):
     def pub_depth_image(self):
         for i in range(self.num_envs):
             # The following code will link the camera's render product and publish the data to the specified topic name.
-            render_product = self.cameras[i]._render_product_path
+            render_product = self.cameras.render_product_paths[i]
             step_size = 1
             if (self.num_envs == 1):
                 topic_name = "unitree_go2/front_cam/depth_image"                
@@ -478,7 +491,7 @@ class RobotDataManager(Node):
     def pub_semantic_image(self):
         for i in range(self.num_envs):
             # The following code will link the camera's render product and publish the data to the specified topic name.
-            render_product = self.cameras[i]._render_product_path
+            render_product = self.cameras.render_product_paths[i]
             step_size = 1
             if (self.num_envs == 1):
                 topic_name = "unitree_go2/front_cam/semantic_segmentation_image"
@@ -522,7 +535,7 @@ class RobotDataManager(Node):
     def pub_cam_depth_cloud(self):
         for i in range(self.num_envs):
             # The following code will link the camera's render product and publish the data to the specified topic name.
-            render_product = self.cameras[i]._render_product_path
+            render_product = self.cameras.render_product_paths[i]
             step_size = 1
             if (self.num_envs == 1):
                 topic_name = "unitree_go2/front_cam/depth_cloud"    
@@ -558,7 +571,7 @@ class RobotDataManager(Node):
     def publish_camera_info(self):
         for i in range(self.num_envs):
             # The following code will link the camera's render product and publish the data to the specified topic name.
-            render_product = self.cameras[i]._render_product_path
+            render_product = self.cameras.render_product_paths[i]
             step_size = 1
             if (self.num_envs == 1):
                 topic_name = "unitree_go2/front_cam/info"
@@ -566,23 +579,23 @@ class RobotDataManager(Node):
                 topic_name = f"unitree_go2_{i}/front_cam/info"
             queue_size = 1
             node_namespace = ""
-            frame_id = self.cameras[i].prim_path.split("/")[-1] # This matches what the TF tree is publishing.
+            frame_id = self.cameras.cfg.prim_path.split("/")[-1] # This matches what the TF tree is publishing.
 
             writer = rep.writers.get("ROS2PublishCameraInfo")
-            camera_info = read_camera_info(render_product_path=render_product)
+            camera_info, __annotations__ = read_camera_info(render_product_path=render_product)
             writer.initialize(
                 frameId=frame_id,
                 nodeNamespace=node_namespace,
                 queueSize=queue_size,
                 topicName=topic_name,
-                width=camera_info["width"],
-                height=camera_info["height"],
-                projectionType=camera_info["projectionType"],
-                k=camera_info["k"].reshape([1, 9]),
-                r=camera_info["r"].reshape([1, 9]),
-                p=camera_info["p"].reshape([1, 12]),
-                physicalDistortionModel=camera_info["physicalDistortionModel"],
-                physicalDistortionCoefficients=camera_info["physicalDistortionCoefficients"],
+                width=camera_info.width,
+                height=camera_info.height,
+                projectionType=camera_info.distortion_model,
+                k=camera_info.k.reshape([1, 9]),
+                r=camera_info.r.reshape([1, 9]),
+                p=camera_info.p.reshape([1, 12]),
+                physicalDistortionModel=camera_info.distortion_model,
+                physicalDistortionCoefficients=camera_info.d,
             )
             writer.attach([render_product])
 

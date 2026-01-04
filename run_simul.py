@@ -51,7 +51,7 @@ def run_simulator(cfg):
 
     # Sensor setup
     sm = sensor_manager(cfg.num_envs)
-    cameras = sm.create_camera()
+    # cameras = sm.create_camera()
     lidar_annotators = sm.create_lidar()
 
     # Keyboard control
@@ -60,10 +60,11 @@ def run_simulator(cfg):
     
     # ROS2 Bridge
     rclpy.init()
-    dm = go2_ros2_bridge.RobotDataManager(env, lidar_annotators, cameras, cfg)
     #run simulation
     dt = float(go2_env_cfg.sim.dt * go2_env_cfg.decimation)
     obs, _ = env.reset()
+    cameras = env.unwrapped.scene["front_cam"]
+    dm = go2_ros2_bridge.RobotDataManager(env, lidar_annotators, cameras, cfg)
 
     print("[INFO]: simulation started")
 
