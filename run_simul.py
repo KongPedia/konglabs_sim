@@ -10,16 +10,18 @@ from isaaclab.app import AppLauncher
 # add argparse arguments
 parser = argparse.ArgumentParser(description="Unitree go2 ros2 setup")
 
+
 # append AppLauncher cli args
 AppLauncher.add_app_launcher_args(parser)
 # parse the arguments
 args_cli = parser.parse_args()
 args_cli.enable_cameras = True
-args_cli.kit_args = "--/renderer/multiGpu/enabled=true --/renderer/multiGpu/maxGpuCount=2"
+args_cli.kit_args = "--/renderer/multiGpu/enabled=true --/renderer/multiGpu/maxGpuCount=2 --enable isaacsim.asset.gen.omap" 
 
 # launch omniverse app
 app_launcher = AppLauncher(args_cli)
 simulation_app = app_launcher.app
+
 
 
 import omni.kit.app
@@ -44,6 +46,7 @@ import carb
 import go2.go2_ctrl as go2_ctrl
 from go2.go2_env import go2_rl_env, Go2RLEnvCfg
 from envs.usdz_import import GS_import
+from go2_utils.omap_gen import generate_nav2_map
 from go2.go2_sensors import sensor_manager
 import ros2.go2_ros2_bridge as go2_ros2_bridge
 import envs.sim_env as sim_env
@@ -77,6 +80,10 @@ def run_simulator(cfg):
     elif (cfg.env_name == "office"):
         sim_env.create_office_env() # office
 
+    # 환경 오브젝트 생성 후 물리 엔진에 등록될 시간을 줍니다.
+    for _ in range(1):
+        simulation_app.update()
+
     # Sensor setup
     sm = sensor_manager(cfg)
     # cameras, lidars
@@ -94,10 +101,13 @@ def run_simulator(cfg):
 
     obs, _ = env.reset()
 
+
+
     #run simulation
     dt = float(go2_env_cfg.sim.dt * go2_env_cfg.decimation)
 
-
+    # generate occupancy grid map
+    generate_nav2_map(cfg)
 
     while simulation_app.is_running():
         start_time = time.time()

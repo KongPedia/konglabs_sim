@@ -116,7 +116,6 @@ class ObservationsCfg:
 @configclass
 class EventCfg:
     """Configuration for events."""
-    # 로봇 초기 위치 및 자세 설정 (Reset)
     reset_base = EventTerm(
         func=mdp.reset_root_state_uniform,
         mode="reset",
