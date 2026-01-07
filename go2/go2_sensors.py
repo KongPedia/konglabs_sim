@@ -8,24 +8,24 @@ import omni.replicator.core as rep
 
 class sensor_manager:
 
-    def __init__(self, num_envs):
-        self.num_envs = num_envs
+    def __init__(self, cfg):
+        self.cfg = cfg
+        self.num_envs = cfg.num_envs
 
     def create_camera(self):
         cameras= []
         for env_idx in range(self.num_envs):
 
-            # 1.(CameraCfg)
             camera_cfg = CameraCfg(
                 prim_path=f"/World/envs/env_{env_idx}/Go2/base/front_cam",
                 update_period=0.0,                      
-                data_types=["rgb", "depth"],              
+                data_types=["rgb", "depth"],
                 spawn=sim_utils.PinholeCameraCfg(),             
-                width=640,                                       
+                width=640,    
                 height=480,                                      
                 offset=CameraCfg.OffsetCfg(
-                    pos=(0.5, 0.0, 0.1),                         
-                    rot=(1.0, 0.0, 0.0, 0.0),                    
+                    pos=tuple(self.cfg.sensor.camera.pos),                         
+                    rot=tuple(self.cfg.sensor.camera.rot),                    
                     convention="world"                             
                 ),
             )
@@ -39,32 +39,25 @@ class sensor_manager:
 
 
     def create_lidar(self):
-        lidar_annotators = []
+        lidar_sensors = []
 
         sensor_attributes = {'omni:sensor:Core:scanRateBaseHz': 20}
 
         for env_idx in range(self.num_envs):
+            parent_path = f"/World/envs/env_{env_idx}/Go2/base"
 
             # Create the RTX Lidar with the specified attributes.
             _, sensor = omni.kit.commands.execute(
                 "IsaacSensorCreateRtxLidar",
-                translation=Gf.Vec3d(0.0, 0.0, 0.0),
-                orientation=Gf.Quatd(1.0, 0.0, 0.0, 0.0),
+                translation=Gf.Vec3d(*self.cfg.sensor.lidar.pos),
+                orientation=Gf.Quatd(*self.cfg.sensor.lidar.rot),
                 path="lidar",
-                parent=f"/World/envs/env_{env_idx}/Go2/base",
-                config="Example_Rotary",
+                parent=parent_path,
+                config="Example_Rotatory",
                 **sensor_attributes,
             )
-            
+        
 
-            # Create a render product for the sensor.
-            render_product = rep.create.render_product(sensor.GetPath(), resolution=(1024, 1024))
-            # Create an annotator
-            annotator = rep.AnnotatorRegistry.get_annotator("IsaacExtractRTXSensorPointCloudNoAccumulator")
+            lidar_sensors.append(sensor)
 
-            # Attach the render product after the annotator is initialized.
-            annotator.attach([render_product.path])
-
-            lidar_annotators.append(annotator)
-
-        return lidar_annotators
+        return lidar_sensors

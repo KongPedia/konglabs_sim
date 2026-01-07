@@ -16,7 +16,6 @@ def GS_import():
         if gauss_prim.IsValid():
             xformable = UsdGeom.Xformable(gauss_prim)
             
-            # 위치 (Translate): 0.0, 0.0, 50.0
             if not gauss_prim.GetAttribute("xformOp:translate"):
                 xformable.AddTranslateOp()
             gauss_prim.GetAttribute("xformOp:translate").Set(Gf.Vec3f(0.0, 0.0, 1.4))
