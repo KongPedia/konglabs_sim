@@ -62,8 +62,14 @@ python run_simul.py
 
 ---
 # Multi Robot Teleoperation
-[스크린캐스트 01-06-2026 06:19:03 PM.webm](https://github.com/user-attachments/assets/f22e39df-9306-44a1-b699-f9839c981dbf)
-[스크린캐스트 01-07-2026 12:06:04 PM.webm](https://github.com/user-attachments/assets/67bed969-d5be-4c21-b6e6-3f0aea80a846)
+- we are using isaaclab's se2keyboard insterface
+
+8/2 : x linearspeed value (front, back)
+
+4/6 : y linearspeed value (left, right)
+
+7/9 : z angularspeed value(yaw) (z-, z+)
+
 
 ---
 # Importing Go2 into a Digital Twin environment
