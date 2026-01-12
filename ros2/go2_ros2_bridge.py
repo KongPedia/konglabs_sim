@@ -2,8 +2,11 @@ import omni.graph.core as og
 import omni.replicator.core as rep
 import omni.kit.commands
 import rclpy
+import carb
 from geometry_msgs.msg import Twist
 import go2.go2_ctrl as go2_ctrl
+
+
 
 class RobotDataManager:
     def __init__(self, env, lidar_sensors, cameras, cfg):
@@ -28,9 +31,8 @@ class RobotDataManager:
 
         self._setup_odom_publishers()
 
-        # 4. 속도 명령(cmd_vel) 구독자 설정 (다중 환경인 경우)
-        if self.num_envs > 1:
-            self._setup_cmd_vel_subscribers()
+
+        self._setup_cmd_vel_subscribers()
 
     def _setup_cmd_vel_subscribers(self):
         """각 환경별 cmd_vel 토픽 구독 설정"""
@@ -81,7 +83,7 @@ class RobotDataManager:
                                 ("cameraHelperRgb.inputs:frameId", f"front_cam_link_{i}"),
                                 ("cameraHelperRgb.inputs:topicName", f"env_{i}/unitree_go2/front_cam/rgb"),
                                 ("cameraHelperRgb.inputs:type", "rgb"),
-                                ("cameraHelperRgb.inputs:frameSkipCount", 5),
+                                ("cameraHelperRgb.inputs:frameSkipCount", 1),
                             ],
                         },
                     )
@@ -115,7 +117,7 @@ class RobotDataManager:
                             ("LidarHelper.inputs:frameId", f"go2_lidar{i}"),
                             ("LidarHelper.inputs:type", "point_cloud"), 
                             ("LidarHelper.inputs:fullScan", True), 
-                            ("LidarHelper.inputs:frameSkipCount", 10),
+                            ("LidarHelper.inputs:frameSkipCount", 2),
                             ("LidarHelper.inputs:resetSimulationTimeOnStop", True),
                         ],
                     },
@@ -173,7 +175,7 @@ class RobotDataManager:
             print(f"[Error] Global OmniGraph setup error: {e}")
 
     # RobotDataManager 클래스 내부
-    def update(self):
+    def update(self, character):
         """매 프레임마다 호출되어 ROS 2 데이터를 업데이트"""
         # ROS 2 콜백 처리 (비동기 메시지 수신)
         rclpy.spin_once(self.node, timeout_sec=0)
@@ -210,6 +212,18 @@ class RobotDataManager:
             except Exception as e:
                 # 시뮬레이션 초기화 단계에서 노드가 아직 없을 때 에러 방지
                 pass
+        if character is not None:
+            print("character is not none")
+            vec3 = go2_ctrl.get_keyboard_cmd()
+            # Tensor/Numpy 타입을 Python float으로 명시적 변환 (carb 호환성 확보)
+            carb_vec3 = carb.Float3(float(vec3[0]), float(vec3[1]), 0.0)
+            print(f"Current action vector: {carb_vec3}")
+
+            character.set_variable("move", carb_vec3)
+            character.set_variable("forward", carb_vec3)
+
+        
+        
 
     def destroy_node(self):
         """시뮬레이션 종료 시 노드 정리"""

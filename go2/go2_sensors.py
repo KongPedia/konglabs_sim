@@ -19,7 +19,7 @@ class sensor_manager:
             camera_cfg = CameraCfg(
                 prim_path=f"/World/envs/env_{env_idx}/Go2/base/front_cam",
                 update_period=0.0,                      
-                data_types=["rgb", "depth"],
+                data_types=["rgb"],
                 spawn=sim_utils.PinholeCameraCfg(),             
                 width=640,    
                 height=480,                                      
@@ -53,7 +53,7 @@ class sensor_manager:
                 orientation=Gf.Quatd(*self.cfg.sensor.lidar.rot),
                 path="lidar",
                 parent=parent_path,
-                config="Example_Rotatory",
+                config="Example_Rotary",
                 **sensor_attributes,
             )
         

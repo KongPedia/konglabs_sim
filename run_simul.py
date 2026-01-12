@@ -30,6 +30,9 @@ ext_manager = omni.kit.app.get_app().get_extension_manager()
 # 확장 프로그램 활성화 (최신 ID 사용 권장)
 extension_id = "isaacsim.ros2.bridge" 
 ext_manager.set_extension_enabled_immediate(extension_id, True)
+ext_manager.set_extension_enabled_immediate("omni.anim.graph.core", True)
+ext_manager.set_extension_enabled_immediate("omni.anim.graph.bundle", True)
+ext_manager.set_extension_enabled_immediate("omni.anim.graph.ui", True)
 
 
 """Rest everything follows."""
@@ -37,10 +40,10 @@ ext_manager.set_extension_enabled_immediate(extension_id, True)
 import torch
 import time
 import isaaclab.sim as sim_utils
-from isaaclab.scene import InteractiveScene, InteractiveSceneCfg
-from isaaclab.sim import SimulationContext
+from isaacsim.core.utils.prims import create_prim
 
-
+import omni.usd
+import omni.anim.graph.core as ag
 import omni
 import carb
 import go2.go2_ctrl as go2_ctrl
@@ -67,6 +70,24 @@ def run_simulator(cfg):
 
     env, policy = go2_rl_env(go2_env_cfg, cfg)
 
+    person_usd_path = "/home/loe/Downloads/simple_person.usd"
+    character_root_path = "/World/Character"
+
+    create_prim(
+        prim_path=character_root_path,
+        prim_type="Xform",  # Xform으로 감싸서 위치 제어 용이하게 함
+        position=[3.0, 0.0, 0.0],   # [x, y, z] 로봇과 겹치지 않는 위치
+        orientation=[1.0, 0.0, 0.0, 0.0], # [w, x, y, z] (쿼터니언)
+        usd_path=person_usd_path    # 로컬 USD 파일 경로 (Reference)
+    )
+
+    print(f"[INFO]: Loaded character USD from {person_usd_path}")
+    # 환경 오브젝트 생성 후 물리 엔진에 등록될 시간을 줍니다.
+    for _ in range(1):
+        simulation_app.update()
+    # 문서에 명시된 파라미터대로 호출
+    CHAR_PATH = "/World/Character/biped_demo_meters"
+    character = ag.get_character(CHAR_PATH)
 
     # Simulation environment
     if (cfg.env_name == "warehouse"):
@@ -79,6 +100,10 @@ def run_simulator(cfg):
         sim_env.create_full_warehouse_env() # full warehouse
     elif (cfg.env_name == "office"):
         sim_env.create_office_env() # office
+
+
+
+
 
     # 환경 오브젝트 생성 후 물리 엔진에 등록될 시간을 줍니다.
     for _ in range(1):
@@ -93,10 +118,7 @@ def run_simulator(cfg):
     # ROS2 Bridge
     dm = go2_ros2_bridge.RobotDataManager(env, lidars, cameras, cfg)
 
-    # Keyboard control
-    system_input = carb.input.acquire_input_interface()
-    system_input.subscribe_to_keyboard_events(omni.appwindow.get_default_app_window().get_keyboard(), go2_ctrl.sub_keyboard_event)
-    
+
     print("[INFO]: simulation started")
 
     obs, _ = env.reset()
@@ -107,10 +129,13 @@ def run_simulator(cfg):
     dt = float(go2_env_cfg.sim.dt * go2_env_cfg.decimation)
 
     # generate occupancy grid map
-    generate_nav2_map(cfg)
+    if cfg.generate_map:
+        generate_nav2_map(cfg)
+
 
     while simulation_app.is_running():
         start_time = time.time()
+
         with torch.inference_mode():
                 
                 actions = policy(obs)
@@ -118,7 +143,7 @@ def run_simulator(cfg):
                 obs, _, _, _ = env.step(actions)
 
 
-        dm.update()
+        dm.update(character)
         # dm.update_tf()
         elapsed_time = time.time() - start_time
 
