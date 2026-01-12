@@ -213,11 +213,11 @@ class RobotDataManager:
                 # 시뮬레이션 초기화 단계에서 노드가 아직 없을 때 에러 방지
                 pass
         if character is not None:
-            print("character is not none")
+            # print("character is not none")
             vec3 = go2_ctrl.get_keyboard_cmd()
             # Tensor/Numpy 타입을 Python float으로 명시적 변환 (carb 호환성 확보)
             carb_vec3 = carb.Float3(float(vec3[0]), float(vec3[1]), 0.0)
-            print(f"Current action vector: {carb_vec3}")
+            # print(f"Current action vector: {carb_vec3}")
 
             character.set_variable("move", carb_vec3)
             character.set_variable("forward", carb_vec3)

@@ -8,8 +8,8 @@ from isaaclab.devices import Se2Keyboard, Se2KeyboardCfg
 
 base_vel_cmd_input = None
 keyboardCfg = Se2KeyboardCfg()
-keyboardCfg.v_x_sensitivity = 1.2      # X축 선속도 민감도 변경
-keyboardCfg.v_y_sensitivity = 1.2      # Y축 선속도 민감도 변경
+keyboardCfg.v_x_sensitivity = 3.0      # X축 선속도 민감도 변경
+keyboardCfg.v_y_sensitivity = 3.0      # Y축 선속도 민감도 변경
 keyboardCfg.omega_z_sensitivity = 1.5  # Z축 각속도(회전) 민감도 변경
 keyboard = Se2Keyboard(keyboardCfg)
 
