@@ -39,11 +39,8 @@ class RobotDataManager:
     def _setup_joint_state_publishers(self):
             self.joint_pubs = []
             for i in range(self.num_envs):
-                if self.num_envs == 1:
-                    topic_name = "joint_states"
-                else:
-                    topic_name = f"robot{i}/joint_states"
-                
+
+                topic_name = f"env{i}/joint_states"
                 # 퍼블리셔 생성 (메시지 타입: JointState, 큐 사이즈: 10)
                 pub = self.node.create_publisher(JointState, topic_name, 10)
                 self.joint_pubs.append(pub)
@@ -54,10 +51,8 @@ class RobotDataManager:
         """각 환경별 cmd_vel 토픽 구독 설정"""
         self._velocity_subs = []
         for i in range(self.num_envs):
-            if self.num_envs == 1:
-                topic_name = "cmd_vel"
-            else:
-                topic_name = f"robot{i}/cmd_vel"
+
+            topic_name = f"env{i}/cmd_vel"
             # 클로저를 사용하여 인덱스 i를 캡처
             sub = self.node.create_subscription(
                 Twist,
@@ -88,12 +83,9 @@ class RobotDataManager:
                 # 각 환경별 고유한 그래프 경로
                 graph_path = f"/World/Graph/Camera/Camera_ROS_Graph_env_{i}"
                 
-                if self.num_envs == 1:
-                    topic_name = "camera"
-                    frame_id = "camera_link"
-                else:
-                    topic_name = f"robot{i}/camera"
-                    frame_id = f"robot{i}/camera_link"
+
+                topic_name = f"env{i}/camera"
+                frame_id = f"env{i}/camera_link"
 
                 try:
                     # OmniGraph 구성
@@ -132,12 +124,9 @@ class RobotDataManager:
                 # 2. 각 환경별 고유 그래프 경로
                 graph_path = f"/World/Graph/Lidar/Lidar_ROS_Graph_env_{i}"
                 
-                if self.num_envs == 1:
-                    topic_name = "point_cloud2"
-                    frame_id = "lidar_link"
-                else:
-                    topic_name = f"robot{i}/point_cloud2"
-                    frame_id = f"robot{i}/lidar_link"
+
+                topic_name = f"env{i}/point_cloud2"
+                frame_id = f"env{i}/lidar_link"
 
                 # 3. OmniGraph 노드 생성 및 설정
                 og.Controller.edit(
@@ -171,14 +160,10 @@ class RobotDataManager:
         for i in range(self.num_envs):
             graph_path = f"/World/Graph/Odom/Odom_ROS_Graph_env_{i}"
             
-            if self.num_envs == 1:
-                topic_name = "odom"
-                odom_frame_id = "odom"
-                chassis_frame_id = "base_link"
-            else:
-                topic_name = f"robot{i}/odom"
-                odom_frame_id = f"robot{i}/odom"
-                chassis_frame_id = f"robot{i}/base_link" 
+
+            topic_name = f"env{i}/odom"
+            odom_frame_id = f"odom"
+            chassis_frame_id = f"env{i}/base_link" 
 
             try:
                 og.Controller.edit(
@@ -272,10 +257,7 @@ class RobotDataManager:
                 
                 # Header 채우기
                 msg.header.stamp = ros_time_msg
-                if self.num_envs == 1:
-                    msg.header.frame_id = "base_link"
-                else:
-                    msg.header.frame_id = f"robot{i}/base_link"
+                msg.header.frame_id = f"env{i}/base_link"
                 
                 # 데이터 채우기 (Tensor -> List 변환 필수!)
                 msg.name = robot_data.joint_names 
@@ -288,12 +270,6 @@ class RobotDataManager:
 
             except Exception as e:
                 pass
-
-
-
-
-
-
 
 
         if character is not None:

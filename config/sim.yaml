@@ -4,7 +4,7 @@ defaults:
 num_envs: 1
 freq: 40 # can onl be divisible by 20
 camera_follow: True
-generate_map: False
+generate_map: True
 env_name: full-warehouse
 # env_name: full-warehouse
 

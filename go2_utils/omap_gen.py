@@ -87,9 +87,10 @@ def generate_nav2_map(cfg):
     # Nav2 호환을 위해 Grayscale 변환
     im = im.convert("L")
     
-    # 필요한 경우 상하 반전 (Isaac Sim 좌표계 -> 이미지 좌표계)
-    # im = im.transpose(Image.FLIP_TOP_BOTTOM) 
 
+    im = im.transpose(Image.FLIP_LEFT_RIGHT) # 좌우 반전
+    im = im.transpose(Image.FLIP_TOP_BOTTOM) # 상하 반전 (Nav2 원점 맞춤) [1]
+    im = im.convert("L")
     im.save(full_pgm_path)
     print(f"[INFO] Map image saved to: {full_pgm_path}")
 
@@ -98,7 +99,7 @@ def generate_nav2_map(cfg):
         "image": pgm_filename,
         "mode": "trinary",
         "resolution": cell_size,
-        "origin": [origin[0] - min_bound[0], origin[1] - min_bound[1], 0.0],
+        "origin": [origin[0] + min_bound[0], origin[1] + min_bound[1], 0.0],
         "negate": 0,
         "occupied_thresh": 0.65,
         "free_thresh": 0.25
