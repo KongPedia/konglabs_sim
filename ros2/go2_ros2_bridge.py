@@ -5,8 +5,8 @@ import rclpy
 import carb
 from geometry_msgs.msg import Twist
 import go2.go2_ctrl as go2_ctrl
-
-
+from sensor_msgs.msg import JointState
+from rclpy.time import Time
 
 class RobotDataManager:
     def __init__(self, env, lidar_sensors, cameras, cfg):
@@ -31,14 +31,33 @@ class RobotDataManager:
 
         self._setup_odom_publishers()
 
-
         self._setup_cmd_vel_subscribers()
+        
+        self._setup_joint_state_publishers()
+
+
+    def _setup_joint_state_publishers(self):
+            self.joint_pubs = []
+            for i in range(self.num_envs):
+                if self.num_envs == 1:
+                    topic_name = "joint_states"
+                else:
+                    topic_name = f"robot{i}/joint_states"
+                
+                # 퍼블리셔 생성 (메시지 타입: JointState, 큐 사이즈: 10)
+                pub = self.node.create_publisher(JointState, topic_name, 10)
+                self.joint_pubs.append(pub)
+                print(f"[Bridge] Created JointState publisher: {topic_name}")
+
 
     def _setup_cmd_vel_subscribers(self):
         """각 환경별 cmd_vel 토픽 구독 설정"""
         self._velocity_subs = []
         for i in range(self.num_envs):
-            topic_name = f"env_{i}/unitree_go2/cmd_vel"
+            if self.num_envs == 1:
+                topic_name = "cmd_vel"
+            else:
+                topic_name = f"robot{i}/cmd_vel"
             # 클로저를 사용하여 인덱스 i를 캡처
             sub = self.node.create_subscription(
                 Twist,
@@ -56,6 +75,9 @@ class RobotDataManager:
             go2_ctrl.base_vel_cmd_input[idx, 1] = msg.linear.y
             go2_ctrl.base_vel_cmd_input[idx, 2] = msg.angular.z
 
+
+
+
     def _setup_camera_publishers(self):
         """라이터 대신 OmniGraph의 ROS2 Camera Helper 노드를 직접 생성"""
         if self.cameras is not None:
@@ -64,8 +86,15 @@ class RobotDataManager:
                 render_product_path = self.cameras.render_product_paths[i]
                 
                 # 각 환경별 고유한 그래프 경로
-                graph_path = f"/World/Camera_ROS_Graph_env_{i}"
+                graph_path = f"/World/Graph/Camera/Camera_ROS_Graph_env_{i}"
                 
+                if self.num_envs == 1:
+                    topic_name = "camera"
+                    frame_id = "camera_link"
+                else:
+                    topic_name = f"robot{i}/camera"
+                    frame_id = f"robot{i}/camera_link"
+
                 try:
                     # OmniGraph 구성
                     og.Controller.edit(
@@ -80,8 +109,8 @@ class RobotDataManager:
                             ],
                             og.Controller.Keys.SET_VALUES: [
                                 ("cameraHelperRgb.inputs:renderProductPath", render_product_path),
-                                ("cameraHelperRgb.inputs:frameId", f"front_cam_link_{i}"),
-                                ("cameraHelperRgb.inputs:topicName", f"env_{i}/unitree_go2/front_cam/rgb"),
+                                ("cameraHelperRgb.inputs:frameId", frame_id),
+                                ("cameraHelperRgb.inputs:topicName", topic_name),
                                 ("cameraHelperRgb.inputs:type", "rgb"),
                                 ("cameraHelperRgb.inputs:frameSkipCount", 1),
                             ],
@@ -91,6 +120,9 @@ class RobotDataManager:
                 except Exception as e:
                     print(f"[Error] Failed to create Camera Helper for Env {i}: {e}")
 
+
+
+
     def _setup_lidar_publishers(self):
         if self.lidar_sensors is not None:
             for i, annotator in enumerate(self.lidar_sensors):
@@ -98,8 +130,15 @@ class RobotDataManager:
                 render_product_obj = rep.create.render_product(annotator.GetPath(), resolution=[1024, 64], name="Isaac")
                 render_product_path = render_product_obj.path
                 # 2. 각 환경별 고유 그래프 경로
-                graph_path = f"/World/Lidar_ROS_Graph_env_{i}"
+                graph_path = f"/World/Graph/Lidar/Lidar_ROS_Graph_env_{i}"
                 
+                if self.num_envs == 1:
+                    topic_name = "point_cloud2"
+                    frame_id = "lidar_link"
+                else:
+                    topic_name = f"robot{i}/point_cloud2"
+                    frame_id = f"robot{i}/lidar_link"
+
                 # 3. OmniGraph 노드 생성 및 설정
                 og.Controller.edit(
                     {"graph_path": graph_path, "evaluator_name": "push"},
@@ -113,8 +152,8 @@ class RobotDataManager:
                         ],
                         og.Controller.Keys.SET_VALUES: [
                             ("LidarHelper.inputs:renderProductPath", render_product_path),
-                            ("LidarHelper.inputs:topicName", f"env_{i}/unitree_go2/lidar/point_cloud"),
-                            ("LidarHelper.inputs:frameId", f"go2_lidar{i}"),
+                            ("LidarHelper.inputs:topicName", topic_name),
+                            ("LidarHelper.inputs:frameId", frame_id),
                             ("LidarHelper.inputs:type", "point_cloud"), 
                             ("LidarHelper.inputs:fullScan", True), 
                             ("LidarHelper.inputs:frameSkipCount", 2),
@@ -130,8 +169,17 @@ class RobotDataManager:
     def _setup_odom_publishers(self):
         """데이터 주입을 위한 ROS 2 Publish Odometry 노드만 생성"""
         for i in range(self.num_envs):
-            graph_path = f"/World/Odom_ROS_Graph_env_{i}"
+            graph_path = f"/World/Graph/Odom/Odom_ROS_Graph_env_{i}"
             
+            if self.num_envs == 1:
+                topic_name = "odom"
+                odom_frame_id = "odom"
+                chassis_frame_id = "base_link"
+            else:
+                topic_name = f"robot{i}/odom"
+                odom_frame_id = f"robot{i}/odom"
+                chassis_frame_id = f"robot{i}/base_link" 
+
             try:
                 og.Controller.edit(
                     {"graph_path": graph_path, "evaluator_name": "push"},
@@ -141,9 +189,9 @@ class RobotDataManager:
                             ("PublishOdom", "isaacsim.ros2.bridge.ROS2PublishOdometry"),
                         ],
                         og.Controller.Keys.SET_VALUES: [
-                            ("PublishOdom.inputs:topicName", f"env_{i}/unitree_go2/odom"),
-                            ("PublishOdom.inputs:odomFrameId", f"odom_{i}"),
-                            ("PublishOdom.inputs:chassisFrameId", f"base_link_{i}"),
+                            ("PublishOdom.inputs:topicName", topic_name),
+                            ("PublishOdom.inputs:odomFrameId", odom_frame_id),
+                            ("PublishOdom.inputs:chassisFrameId", chassis_frame_id),
                         ],
                     },
                 )
@@ -158,7 +206,7 @@ class RobotDataManager:
         """시뮬레이션 시간(/clock) 발행 (모든 환경 공통)"""
         try:
             og.Controller.edit(
-                {"graph_path": "/World/Push_ROS2_Clock", "evaluator_name": "execpushution"},
+                {"graph_path": "/World/Graph/Clock/Push_ROS2_Clock", "evaluator_name": "execution"},
                 {
                     og.Controller.Keys.CREATE_NODES: [
                         ("OnPlaybackTick", "omni.graph.action.OnPlaybackTick"),
@@ -169,8 +217,12 @@ class RobotDataManager:
                         ("OnPlaybackTick.outputs:tick", "PublishClock.inputs:execIn"),
                         ("ReadSimTime.outputs:simulationTime", "PublishClock.inputs:timeStamp"),
                     ],
+                    og.Controller.Keys.SET_VALUES: [
+                        ("PublishClock.inputs:topicName", f"clock")
+                    ],
                 },
             )
+            print("[Bridge] Clock Publisher Graph created successfully.")
         except Exception as e:
             print(f"[Error] Global OmniGraph setup error: {e}")
 
@@ -182,13 +234,13 @@ class RobotDataManager:
 
         # Isaac Lab Tensor 데이터 가져오기 (unitree_go2는 Scene에 등록된 이름)
         robot_data = self.env.unwrapped.scene["go2"].data
-        
+
         # 시뮬레이션 시간 가져오기
         current_sim_time = self.env.unwrapped.sim.current_time
-
+        ros_time_msg = Time(seconds = current_sim_time).to_msg()
         for i in range(self.num_envs):
             # 그래프 상의 PublishOdom 노드 경로
-            odom_node_path = f"/World/Odom_ROS_Graph_env_{i}/PublishOdom"
+            odom_node_path = f"/World/Graph/Odom/Odom_ROS_Graph_env_{i}/PublishOdom"
             
             # 1. 위치 및 자세 (Root State: [pos_x, pos_y, pos_z, quat_w, quat_x, quat_y, quat_z])
             pos = robot_data.root_state_w[i, :3].tolist()
@@ -212,6 +264,38 @@ class RobotDataManager:
             except Exception as e:
                 # 시뮬레이션 초기화 단계에서 노드가 아직 없을 때 에러 방지
                 pass
+            
+                # [2] JointState 메시지 생성 및 발행
+            try:
+                # msg 객체 생성 (여기서 가져온 클래스를 사용합니다)
+                msg = JointState()
+                
+                # Header 채우기
+                msg.header.stamp = ros_time_msg
+                if self.num_envs == 1:
+                    msg.header.frame_id = "base_link"
+                else:
+                    msg.header.frame_id = f"robot{i}/base_link"
+                
+                # 데이터 채우기 (Tensor -> List 변환 필수!)
+                msg.name = robot_data.joint_names 
+                msg.position = robot_data._joint_pos.data[i].tolist()
+                msg.velocity = robot_data._joint_vel.data[i].tolist()
+                msg.effort = robot_data.applied_torque[i].tolist()
+
+                # 발행 (Publish)
+                self.joint_pubs[i].publish(msg)
+
+            except Exception as e:
+                pass
+
+
+
+
+
+
+
+
         if character is not None:
             # print("character is not none")
             vec3 = go2_ctrl.get_keyboard_cmd()

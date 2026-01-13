@@ -70,7 +70,7 @@ def run_simulator(cfg):
 
     env, policy = go2_rl_env(go2_env_cfg, cfg)
 
-    person_usd_path = "/home/loe/Downloads/simple_person.usd"
+    person_usd_path = "models/USD/simple_person.usd"
     character_root_path = "/World/Character"
 
     create_prim(
@@ -82,7 +82,7 @@ def run_simulator(cfg):
     )
 
     print(f"[INFO]: Loaded character USD from {person_usd_path}")
-    # 환경 오브젝트 생성 후 물리 엔진에 등록될 시간을 줍니다.
+    # 환경 오브젝트 생성 후 물리 엔진에 등록될 시간을 줍니다.n
     for _ in range(1):
         simulation_app.update()
     # 문서에 명시된 파라미터대로 호출
