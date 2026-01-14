@@ -31,13 +31,13 @@ def generate_nav2_map(cfg):
     generator = _omap.Generator(physx_interface, stage_id)
     
     # [설정] Nav2 맵 범위 및 스캔 높이 수정
-    min_bound = (-17.0, -15.0, 0.0) 
-    max_bound = (17.0, 43.0, 1.0)
-    origin = (-10.0, -10.0, 0.5) # 스캔 시작점도 안전하게 띄웁니다.
+    min_bound = cfg.mapping.lower_bound
+    max_bound = cfg.mapping.upper_bound
+    origin = cfg.mapping.origin # 스캔 시작점도 안전하게 띄웁니다.
     
     # 문서 참조: update_settings(cell_size, occupied_val, unoccupied_val, unknown_val)
     # 내부 계산용 값 설정 (이미지 생성 시에는 색상으로 덮어씌워지지만 설정은 필요)
-    cell_size = 0.05
+    cell_size = cfg.mapping.cell_size
     generator.update_settings(cell_size, 4, 5, 6)
     
     # 문서 참조: set_transform(origin, min_bound, max_bound)

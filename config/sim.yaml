@@ -1,12 +1,11 @@
 defaults:
   - _self_
 
-num_envs: 1
+num_envs: 4
 freq: 40 # can onl be divisible by 20
 camera_follow: True
 generate_map: True
 env_name: full-warehouse
-# env_name: full-warehouse
 
 sensor:
   enable_lidar: True

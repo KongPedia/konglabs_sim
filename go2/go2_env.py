@@ -35,8 +35,8 @@ class Myscene(InteractiveSceneCfg):
     )
 
     # 로봇 정의
-    go2: ArticulationCfg = UNITREE_GO2_CFG.replace(prim_path="{ENV_REGEX_NS}/Go2")
-
+    go2: ArticulationCfg = UNITREE_GO2_CFG.replace(prim_path="{ENV_REGEX_NS}/Go2", collision_group = -1)
+    filter_collisions=False
 
     front_cam = CameraCfg(
         prim_path="{ENV_REGEX_NS}/Go2/base/front_cam",

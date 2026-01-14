@@ -52,7 +52,7 @@ class RobotDataManager:
         self._velocity_subs = []
         for i in range(self.num_envs):
 
-            topic_name = f"env{i}/cmd_vel"
+            topic_name = f"robot{i}/cmd_vel"
             # 클로저를 사용하여 인덱스 i를 캡처
             sub = self.node.create_subscription(
                 Twist,
@@ -135,15 +135,18 @@ class RobotDataManager:
                         og.Controller.Keys.CREATE_NODES: [
                             ("OnTick", "omni.graph.action.OnTick"),
                             ("LidarHelper", "isaacsim.ros2.bridge.ROS2RtxLidarHelper"),
+                            ("LidarQoS", "isaacsim.ros2.bridge.ROS2QoSProfile"),
                         ],
                         og.Controller.Keys.CONNECT: [
                             ("OnTick.outputs:tick", "LidarHelper.inputs:execIn"),
+                            ("LidarQoS.outputs:qosProfile", "LidarHelper.inputs:qosProfile"),
                         ],
                         og.Controller.Keys.SET_VALUES: [
                             ("LidarHelper.inputs:renderProductPath", render_product_path),
                             ("LidarHelper.inputs:topicName", topic_name),
                             ("LidarHelper.inputs:frameId", frame_id),
-                            ("LidarHelper.inputs:type", "point_cloud"), 
+                            ("LidarHelper.inputs:type", "point_cloud"),
+                            ("LidarQoS.inputs:createProfile", "Sensor Data"), 
                             ("LidarHelper.inputs:fullScan", True), 
                             ("LidarHelper.inputs:frameSkipCount", 2),
                             ("LidarHelper.inputs:resetSimulationTimeOnStop", True),

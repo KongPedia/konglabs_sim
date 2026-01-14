@@ -22,7 +22,7 @@ class Go2MultiCmdVelPublisher(Node):
 
         for i in range(self.num_envs):
             # go2_ros2_bridge.py에서 구독하는 토픽명과 일치시킴
-            topic_name = f'/env{i}/cmd_vel'
+            topic_name = f'/robot{i}/cmd_vel'
             pub = self.create_publisher(Twist, topic_name, 10)
             self.publishers_list.append(pub)
             self.vel_commands.append({'x': 0.0, 'y': 0.0, 'z': 0.0})
