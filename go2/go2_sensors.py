@@ -38,8 +38,8 @@ class sensor_manager:
 
 
 
-    def create_lidar(self):
-        lidar_sensors = []
+    def create_lidar_3d(self):
+        lidar_sensors_3d = []
 
         sensor_attributes = {'omni:sensor:Core:scanRateBaseHz': 20}
 
@@ -51,13 +51,37 @@ class sensor_manager:
                 "IsaacSensorCreateRtxLidar",
                 translation=Gf.Vec3d(*self.cfg.sensor.lidar.pos),
                 orientation=Gf.Quatd(*self.cfg.sensor.lidar.rot),
-                path="lidar",
+                path="lidar_3d",
                 parent=parent_path,
-                config="Example_Rotary",
+                config="HESAI_XT32_SD10",
                 **sensor_attributes,
             )
         
 
-            lidar_sensors.append(sensor)
+            lidar_sensors_3d.append(sensor)
 
-        return lidar_sensors
+        return lidar_sensors_3d
+    
+    def create_lidar_2d(self):
+        lidar_sensors_2d = []
+
+        sensor_attributes = {'omni:sensor:Core:scanRateBaseHz': 20}
+
+        for env_idx in range(self.num_envs):
+            parent_path = f"/World/envs/env_{env_idx}/Go2/base"
+
+            # Create the RTX Lidar with the specified attributes.
+            _, sensor = omni.kit.commands.execute(
+                "IsaacSensorCreateRtxLidar",
+                translation=Gf.Vec3d(*self.cfg.sensor.lidar.pos),
+                orientation=Gf.Quatd(*self.cfg.sensor.lidar.rot),
+                path="lidar_2d",
+                parent=parent_path,
+                config="Example_Rotary_2D",
+                **sensor_attributes,
+            )
+        
+
+            lidar_sensors_2d.append(sensor)
+
+        return lidar_sensors_2d

@@ -112,11 +112,11 @@ def run_simulator(cfg):
     # Sensor setup
     sm = sensor_manager(cfg)
     # cameras, lidars
-    lidars = sm.create_lidar()
+    lidars_3d = sm.create_lidar_3d()
+    lidars_2d = sm.create_lidar_2d()
     cameras = env.unwrapped.scene["front_cam"]
-
     # ROS2 Bridge
-    dm = go2_ros2_bridge.RobotDataManager(env, lidars, cameras, cfg)
+    dm = go2_ros2_bridge.RobotDataManager(env, lidar_sensors_3d=lidars_3d, lidar_sensors_2d=lidars_2d, cameras=cameras, cfg=cfg)
 
 
     print("[INFO]: simulation started")

@@ -9,10 +9,11 @@ from sensor_msgs.msg import JointState
 from rclpy.time import Time
 
 class RobotDataManager:
-    def __init__(self, env, lidar_sensors, cameras, cfg):
+    def __init__(self, env, lidar_sensors_3d, lidar_sensors_2d, cameras, cfg):
         self.env = env
         self.num_envs = cfg.num_envs
-        self.lidar_sensors = lidar_sensors
+        self.lidar_sensors_3d = lidar_sensors_3d
+        self.lidar_sensors_2d = lidar_sensors_2d
         self.cameras = cameras
         
         # ROS 2 노드 초기화 (구독자용)
@@ -24,7 +25,9 @@ class RobotDataManager:
         self._setup_camera_publishers()
         
         # 2. 라이다 발행기 설정 (루프 처리)
-        self._setup_lidar_publishers()
+        self._setup_3d_lidar_publishers()
+
+        self._setup_2d_lidar_publishers()
         
         # 3. 공통 데이터(Clock 등) 발행용 OmniGraph 설정
         self._setup_global_omnigraph()
@@ -84,8 +87,8 @@ class RobotDataManager:
                 graph_path = f"/World/Graph/Camera/Camera_ROS_Graph_env_{i}"
                 
 
-                topic_name = f"env{i}/camera"
-                frame_id = f"env{i}/camera_link"
+                topic_name = f"robot{i}/camera/image_raw"
+                frame_id = f"front_camera"
 
                 try:
                     # OmniGraph 구성
@@ -115,16 +118,14 @@ class RobotDataManager:
 
 
 
-    def _setup_lidar_publishers(self):
-        if self.lidar_sensors is not None:
-            for i, annotator in enumerate(self.lidar_sensors):
+    def _setup_3d_lidar_publishers(self):
+        if self.lidar_sensors_3d is not None:
+            for i, annotator in enumerate(self.lidar_sensors_3d):
                 # 1. 렌더 제품 경로 가져오기 (문서의 renderProductPath 입력값)
                 render_product_obj = rep.create.render_product(annotator.GetPath(), resolution=[1024, 64], name="Isaac")
                 render_product_path = render_product_obj.path
                 # 2. 각 환경별 고유 그래프 경로
-                graph_path = f"/World/Graph/Lidar/Lidar_ROS_Graph_env_{i}"
-                
-
+                graph_path = f"/World/Graph/Lidar/Lidar_3d_ROS_Graph_env_{i}"
                 topic_name = f"env{i}/point_cloud2"
                 frame_id = f"env{i}/lidar_link"
 
@@ -148,7 +149,6 @@ class RobotDataManager:
                             ("LidarHelper.inputs:type", "point_cloud"),
                             ("LidarQoS.inputs:createProfile", "Sensor Data"), 
                             ("LidarHelper.inputs:fullScan", True), 
-                            ("LidarHelper.inputs:frameSkipCount", 2),
                             ("LidarHelper.inputs:resetSimulationTimeOnStop", True),
                         ],
                     },
@@ -156,6 +156,42 @@ class RobotDataManager:
                 print(f"[Bridge] LiDAR Helper Node (Env {i}) created successfully.")
 
 
+    def _setup_2d_lidar_publishers(self):
+        if self.lidar_sensors_2d is not None:
+            for i, annotator in enumerate(self.lidar_sensors_2d):
+                # 1. 렌더 제품 경로 가져오기 (문서의 renderProductPath 입력값)
+                render_product_obj = rep.create.render_product(annotator.GetPath(), resolution=[1024, 64], name="Isaac")
+                render_product_path = render_product_obj.path
+                # 2. 각 환경별 고유 그래프 경로
+                graph_path = f"/World/Graph/Lidar/Lidar_2d_ROS_Graph_env_{i}"
+                topic_name = f"env{i}/scan"
+                frame_id = f"env{i}/scan_link"
+
+                # 3. OmniGraph 노드 생성 및 설정
+                og.Controller.edit(
+                    {"graph_path": graph_path, "evaluator_name": "push"},
+                    {
+                        og.Controller.Keys.CREATE_NODES: [
+                            ("OnTick", "omni.graph.action.OnTick"),
+                            ("LidarHelper", "isaacsim.ros2.bridge.ROS2RtxLidarHelper"),
+                            ("LidarQoS", "isaacsim.ros2.bridge.ROS2QoSProfile"),
+                        ],
+                        og.Controller.Keys.CONNECT: [
+                            ("OnTick.outputs:tick", "LidarHelper.inputs:execIn"),
+                            ("LidarQoS.outputs:qosProfile", "LidarHelper.inputs:qosProfile"),
+                        ],
+                        og.Controller.Keys.SET_VALUES: [
+                            ("LidarHelper.inputs:renderProductPath", render_product_path),
+                            ("LidarHelper.inputs:topicName", topic_name),
+                            ("LidarHelper.inputs:frameId", frame_id),
+                            ("LidarHelper.inputs:type", "laser_scan"),
+                            ("LidarQoS.inputs:createProfile", "Sensor Data"), 
+                            ("LidarHelper.inputs:fullScan", True), 
+                            ("LidarHelper.inputs:resetSimulationTimeOnStop", True),
+                        ],
+                    },
+                )
+                print(f"[Bridge] LiDAR Helper Node (Env {i}) created successfully.")
 
 
     def _setup_odom_publishers(self):
@@ -165,7 +201,7 @@ class RobotDataManager:
             
 
             topic_name = f"env{i}/odom"
-            odom_frame_id = f"odom"
+            odom_frame_id = f"env{i}/odom"
             chassis_frame_id = f"env{i}/base_link" 
 
             try:
