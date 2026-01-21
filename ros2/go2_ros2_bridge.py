@@ -55,7 +55,7 @@ class RobotDataManager:
         self._velocity_subs = []
         for i in range(self.num_envs):
 
-            topic_name = f"robot{i}/cmd_vel"
+            topic_name = f"robot{i}/cmd_vel_out"
             # 클로저를 사용하여 인덱스 i를 캡처
             sub = self.node.create_subscription(
                 Twist,

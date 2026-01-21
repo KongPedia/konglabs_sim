@@ -102,10 +102,6 @@ def run_simulator(cfg):
         sim_env.create_office_env() # office
 
 
-
-
-
-    # 환경 오브젝트 생성 후 물리 엔진에 등록될 시간을 줍니다.
     for _ in range(1):
         simulation_app.update()
 

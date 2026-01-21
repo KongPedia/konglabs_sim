@@ -5,7 +5,8 @@ num_envs: 2
 freq: 40 # can onl be divisible by 20
 camera_follow: True
 generate_map: False
-env_name: full-warehouse
+env_name: warehouse
+
 
 sensor:
   enable_lidar: True

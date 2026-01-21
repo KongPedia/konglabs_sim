@@ -53,7 +53,7 @@ class sensor_manager:
                 orientation=Gf.Quatd(*self.cfg.sensor.lidar.rot),
                 path="lidar_3d",
                 parent=parent_path,
-                config="HESAI_XT32_SD10",
+                config="Example_Rotary",
                 **sensor_attributes,
             )
         
