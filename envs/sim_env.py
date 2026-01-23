@@ -58,4 +58,20 @@ def create_office_env():
     prim.GetReferences().AddReference(asset_path)
 
 
-    
+def create_turret_env():
+    turret_usd_path = "/home/loe/workspace/github/SpotATS_ws/ATS_IsaacSim/Main/ATS_Enviroment/ATS_with_omnigraph.usd" 
+    prim_path = "/World/ATS"
+    prim = get_prim_at_path(prim_path)
+    if not prim.IsValid():
+        prim = define_prim(prim_path, "Xform")
+    prim.GetReferences().AddReference(turret_usd_path)
+
+
+def create_warehouse_custom_env():
+    asset_usd_path = "/home/loe/Downloads/digital_twin/Empty_warehouse/empty_warehouse.usd" 
+    prim_path = "/World/warehouse_custom"
+    prim = get_prim_at_path(prim_path)
+    if not prim.IsValid():
+        prim = define_prim(prim_path, "Xform")
+    prim.GetReferences().AddReference(asset_usd_path)
+

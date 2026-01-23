@@ -67,7 +67,8 @@ def run_simulator(cfg):
     # Apply sensor transforms from config to environment
     go2_env_cfg.scene.front_cam.offset.pos = tuple(cfg.sensor.camera.pos)
     go2_env_cfg.scene.front_cam.offset.rot = tuple(cfg.sensor.camera.rot)
-
+    go2_env_cfg.sim.use_fabric = False  
+    go2_env_cfg.sim.device = "cpu"
     env, policy = go2_rl_env(go2_env_cfg, cfg)
 
     person_usd_path = "models/USD/simple_person.usd"
@@ -100,7 +101,10 @@ def run_simulator(cfg):
         sim_env.create_full_warehouse_env() # full warehouse
     elif (cfg.env_name == "office"):
         sim_env.create_office_env() # office
-
+    elif (cfg.env_name == "turret"):
+        sim_env.create_turret_env() # turret
+    elif (cfg.env_name == "warehouse_custom"):
+        sim_env.create_warehouse_custom_env() # warehouse_custom
 
     for _ in range(1):
         simulation_app.update()
@@ -140,7 +144,6 @@ def run_simulator(cfg):
 
 
         dm.update(character)
-        # dm.update_tf()
         elapsed_time = time.time() - start_time
 
         sleep_time = dt - (elapsed_time)

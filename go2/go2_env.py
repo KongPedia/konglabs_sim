@@ -188,6 +188,7 @@ class Go2RLEnvCfg(ManagerBasedRLEnvCfg):
         self.sim.render_interval = self.decimation 
         self.sim.render.antialiasing_mode = None
 
+
         if self.scene.height_scanner is not None:
             self.scene.height_scanner.update_period = self.decimation * self.sim.dt
 

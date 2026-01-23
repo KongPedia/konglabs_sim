@@ -265,8 +265,6 @@ class RobotDataManager:
         for i in range(self.num_envs):
             # 그래프 상의 PublishOdom 노드 경로
             odom_node_path = f"/World/Graph/Odom/Odom_ROS_Graph_env_{i}/PublishOdom"
-            
-            # 1. 위치 및 자세 (Root State: [pos_x, pos_y, pos_z, quat_w, quat_x, quat_y, quat_z])
             pos = robot_data.root_state_w[i, :3].tolist()
             # Isaac Lab(WXYZ) -> ROS 2(XYZW) 변환
             quat_wxyz = robot_data.root_state_w[i, 3:7]
@@ -288,10 +286,7 @@ class RobotDataManager:
             except Exception as e:
                 # 시뮬레이션 초기화 단계에서 노드가 아직 없을 때 에러 방지
                 pass
-            
-                # [2] JointState 메시지 생성 및 발행
             try:
-                # msg 객체 생성 (여기서 가져온 클래스를 사용합니다)
                 msg = JointState()
                 
                 # Header 채우기

@@ -4,16 +4,11 @@ defaults:
 num_envs: 2
 freq: 40 # can onl be divisible by 20
 camera_follow: True
-generate_map: False
-env_name: warehouse
+generate_map: True
+env_name: warehouse_custom
 
 
 sensor:
-  enable_lidar: True
-  enable_camera: True
-  color_image: True
-  depth_image: True
-  semantic_segmentation: True
   camera:
     pos: [0.5, 0.0, 0.1]
     rot: [1.0, 0.0, 0.0, 0.0]
@@ -21,19 +16,14 @@ sensor:
     pos: [0.0, 0.0, 0.25]
     rot: [1.0, 0.0, 0.0, 0.0]
 
-sim_app:
-  anti_aliasing: 0
-  width: 1280
-  height: 720
-  hide_ui: False
 
 agent_cfg_path: "config/agent.yaml"
 
 mapping:
   enable_mapping: True             # 시뮬레이션 시작 시 맵 생성 여부
-  origin: [-10.0, -10.0, 0.5]          # 맵핑을 시작할 빈 공간의 좌표 (Z축은 스캔 높이) [1, 2]
-  lower_bound: [-17.0, -15.0, 0.0] # 맵핑할 영역의 최소 범위 [1]
-  upper_bound: [17.0, 43.0, 1.0]   # 맵핑할 영역의 최대 범위 [1]
+  origin: [0.0, 0.0, 0.5]          # 맵핑을 시작할 빈 공간의 좌표 (Z축은 스캔 높이) [1, 2]
+  lower_bound: [-30.0, -30.0, 0.0] # 맵핑할 영역의 최소 범위 [1]
+  upper_bound: [30.0, 30.0, 1.0]   # 맵핑할 영역의 최대 범위 [1]
   cell_size: 0.05                  # 픽셀당 실제 거리 (Nav2 표준인 0.05m 권장) [3]
   output_path: "./map"             # 맵 파일이 저장될 경로 [2]
   use_physx_geometry: True         # PhysX 충돌 지오메트리 사용 여부 [3]
