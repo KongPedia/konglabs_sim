@@ -42,7 +42,6 @@ import torch
 import time
 import isaaclab.sim as sim_utils
 from isaacsim.core.utils.prims import create_prim
-
 import omni.usd
 import omni.anim.graph.core as ag
 import omni
@@ -113,8 +112,7 @@ def run_simulator(cfg):
     # Sensor setup
     sm = sensor_manager(cfg)
     # cameras, lidars
-    # lidars_3d = sm.create_lidar_3d()
-    lidars_3d = None
+    lidars_3d = sm.create_lidar_3d()
     lidars_2d = sm.create_lidar_2d()
     cameras = env.unwrapped.scene["front_cam"]
     # ROS2 Bridge

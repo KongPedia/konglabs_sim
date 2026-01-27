@@ -25,7 +25,7 @@ class RobotDataManager:
         self._setup_camera_publishers()
         
         # 2. 라이다 발행기 설정 (루프 처리)
-        # self._setup_3d_lidar_publishers()
+        self._setup_3d_lidar_publishers()
 
         self._setup_2d_lidar_publishers()
         
@@ -88,6 +88,7 @@ class RobotDataManager:
                 
 
                 topic_name = f"robot{i}/camera/image_raw"
+                info_topic = f"robot{i}/camera/camera_info"
                 frame_id = f"front_camera"
 
                 try:
@@ -98,19 +99,25 @@ class RobotDataManager:
                             og.Controller.Keys.CREATE_NODES: [
                                 ("OnTick", "omni.graph.action.OnTick"),
                                 ("cameraHelperRgb", "isaacsim.ros2.bridge.ROS2CameraHelper"),
+                                ("cameraHelperInfo", "isaacsim.ros2.bridge.ROS2CameraInfoHelper"),
                             ],
                             og.Controller.Keys.CONNECT: [
                                 ("OnTick.outputs:tick", "cameraHelperRgb.inputs:execIn"),
+                                ("OnTick.outputs:tick", "cameraHelperInfo.inputs:execIn"),
                             ],
                             og.Controller.Keys.SET_VALUES: [
                                 ("cameraHelperRgb.inputs:renderProductPath", render_product_path),
                                 ("cameraHelperRgb.inputs:frameId", frame_id),
                                 ("cameraHelperRgb.inputs:topicName", topic_name),
                                 ("cameraHelperRgb.inputs:type", "rgb"),
+                                ("cameraHelperInfo.inputs:renderProductPath", render_product_path),
+                                ("cameraHelperInfo.inputs:frameId", frame_id), 
+                                ("cameraHelperInfo.inputs:topicName", info_topic),
+                                ("cameraHelperInfo.inputs:useSystemTime", False), 
                             ],
                         },
                     )
-                    print(f"[Bridge] RGB Publisher created for Env {i} via OmniGraph")
+                    print(f"[Bridge] RGB & Info Publisher created for Env {i} via OmniGraph")
                 except Exception as e:
                     print(f"[Error] Failed to create Camera Helper for Env {i}: {e}")
 
