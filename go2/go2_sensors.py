@@ -21,8 +21,8 @@ class sensor_manager:
                 update_period=0.0,                      
                 data_types=["rgb"],
                 spawn=sim_utils.PinholeCameraCfg(),             
-                width=640,    
-                height=480,                                      
+                width=320,    
+                height=240,                                      
                 offset=CameraCfg.OffsetCfg(
                     pos=tuple(self.cfg.sensor.camera.pos),                         
                     rot=tuple(self.cfg.sensor.camera.rot),                    

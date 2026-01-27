@@ -16,6 +16,7 @@ AppLauncher.add_app_launcher_args(parser)
 # parse the arguments
 args_cli = parser.parse_args()
 args_cli.enable_cameras = True
+args_cli.headless = False 
 args_cli.kit_args = "--/renderer/multiGpu/enabled=true --/renderer/multiGpu/maxGpuCount=2 --enable isaacsim.asset.gen.omap" 
 
 # launch omniverse app
@@ -60,7 +61,7 @@ FILE_PATH = os.path.join(os.path.dirname(__file__), "config")
 def run_simulator(cfg):
     go2_env_cfg = Go2RLEnvCfg()
     go2_env_cfg.decimation = math.ceil(1./go2_env_cfg.sim.dt/cfg.freq)
-    go2_env_cfg.sim.render_interval = go2_env_cfg.decimation
+    go2_env_cfg.sim.render_interval = go2_env_cfg.decimation * 2
     go2_env_cfg.scene.num_envs = cfg.num_envs
     go2_ctrl.init_base_vel_cmd(cfg.num_envs)
     
@@ -76,21 +77,21 @@ def run_simulator(cfg):
 
     create_prim(
         prim_path=character_root_path,
-        prim_type="Xform",  # Xform으로 감싸서 위치 제어 용이하게 함
-        position=[3.0, 0.0, 0.0],   # [x, y, z] 로봇과 겹치지 않는 위치
-        orientation=[1.0, 0.0, 0.0, 0.0], # [w, x, y, z] (쿼터니언)
-        usd_path=person_usd_path    # 로컬 USD 파일 경로 (Reference)
+        prim_type="Xform", 
+        position=[3.0, 0.0, 0.0],
+        orientation=[1.0, 0.0, 0.0, 0.0], 
+        usd_path=person_usd_path 
     )
 
     print(f"[INFO]: Loaded character USD from {person_usd_path}")
-    # 환경 오브젝트 생성 후 물리 엔진에 등록될 시간을 줍니다.n
+    # 환경 오브젝트 생성 후 물리 엔진에 등록될 시간을 줍니다.
     for _ in range(1):
         simulation_app.update()
     # 문서에 명시된 파라미터대로 호출
     CHAR_PATH = "/World/Character/biped_demo_meters"
     character = ag.get_character(CHAR_PATH)
 
-    # Simulation environment
+    # # Simulation environment
     if (cfg.env_name == "warehouse"):
         sim_env.create_warehouse_env() # warehouse
     elif (cfg.env_name == "warehouse-forklifts"):
@@ -112,7 +113,8 @@ def run_simulator(cfg):
     # Sensor setup
     sm = sensor_manager(cfg)
     # cameras, lidars
-    lidars_3d = sm.create_lidar_3d()
+    # lidars_3d = sm.create_lidar_3d()
+    lidars_3d = None
     lidars_2d = sm.create_lidar_2d()
     cameras = env.unwrapped.scene["front_cam"]
     # ROS2 Bridge

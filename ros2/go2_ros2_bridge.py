@@ -25,7 +25,7 @@ class RobotDataManager:
         self._setup_camera_publishers()
         
         # 2. 라이다 발행기 설정 (루프 처리)
-        self._setup_3d_lidar_publishers()
+        # self._setup_3d_lidar_publishers()
 
         self._setup_2d_lidar_publishers()
         
@@ -107,7 +107,6 @@ class RobotDataManager:
                                 ("cameraHelperRgb.inputs:frameId", frame_id),
                                 ("cameraHelperRgb.inputs:topicName", topic_name),
                                 ("cameraHelperRgb.inputs:type", "rgb"),
-                                ("cameraHelperRgb.inputs:frameSkipCount", 1),
                             ],
                         },
                     )
