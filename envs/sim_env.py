@@ -75,3 +75,10 @@ def create_warehouse_custom_env():
         prim = define_prim(prim_path, "Xform")
     prim.GetReferences().AddReference(asset_usd_path)
 
+def create_konglabs_custom_env():
+    asset_usd_path = "/home/loe/Downloads/digital_twin/konglabs_office/konglabs.usd" 
+    prim_path = "/World/konglabs"
+    prim = get_prim_at_path(prim_path)
+    if not prim.IsValid():
+        prim = define_prim(prim_path, "Xform")
+    prim.GetReferences().AddReference(asset_usd_path)

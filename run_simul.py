@@ -71,6 +71,42 @@ def run_simulator(cfg):
     go2_env_cfg.sim.device = "cpu"
     env, policy = go2_rl_env(go2_env_cfg, cfg)
 
+
+
+    # # Simulation environment
+    if (cfg.env_name == "warehouse"):
+        sim_env.create_warehouse_env() # warehouse
+    elif (cfg.env_name == "warehouse-forklifts"):
+        sim_env.create_warehouse_forklifts_env() # warehouse forklifts
+    elif (cfg.env_name == "warehouse-shelves"):
+        sim_env.create_warehouse_shelves_env() # warehouse shelves
+    elif (cfg.env_name == "full-warehouse"):
+        sim_env.create_full_warehouse_env() # full warehouse
+    elif (cfg.env_name == "office"):
+        sim_env.create_office_env() # office
+    elif (cfg.env_name == "turret"):
+        sim_env.create_turret_env() # turret
+    elif (cfg.env_name == "warehouse_custom"):
+        sim_env.create_warehouse_custom_env() # warehouse_custom
+    elif (cfg.env_name == "konglabs"):
+        sim_env.create_konglabs_custom_env() # warehouse_custom
+    for _ in range(1):
+        simulation_app.update()
+
+    # Sensor setup
+    sm = sensor_manager(cfg)
+    # cameras, lidars
+    lidars_3d = sm.create_lidar_3d()
+    lidars_2d = sm.create_lidar_2d()
+    cameras = env.unwrapped.scene["front_cam"]
+    # ROS2 Bridge
+    dm = go2_ros2_bridge.RobotDataManager(env, lidar_sensors_3d=lidars_3d, lidar_sensors_2d=lidars_2d, cameras=cameras, cfg=cfg)
+
+    # generate occupancy grid map
+    if cfg.generate_map:
+        generate_nav2_map(cfg)
+
+
     person_usd_path = "models/USD/simple_person.usd"
     character_root_path = "/World/Character"
 
@@ -90,35 +126,6 @@ def run_simulator(cfg):
     CHAR_PATH = "/World/Character/biped_demo_meters"
     character = ag.get_character(CHAR_PATH)
 
-    # # Simulation environment
-    if (cfg.env_name == "warehouse"):
-        sim_env.create_warehouse_env() # warehouse
-    elif (cfg.env_name == "warehouse-forklifts"):
-        sim_env.create_warehouse_forklifts_env() # warehouse forklifts
-    elif (cfg.env_name == "warehouse-shelves"):
-        sim_env.create_warehouse_shelves_env() # warehouse shelves
-    elif (cfg.env_name == "full-warehouse"):
-        sim_env.create_full_warehouse_env() # full warehouse
-    elif (cfg.env_name == "office"):
-        sim_env.create_office_env() # office
-    elif (cfg.env_name == "turret"):
-        sim_env.create_turret_env() # turret
-    elif (cfg.env_name == "warehouse_custom"):
-        sim_env.create_warehouse_custom_env() # warehouse_custom
-
-    for _ in range(1):
-        simulation_app.update()
-
-    # Sensor setup
-    sm = sensor_manager(cfg)
-    # cameras, lidars
-    lidars_3d = sm.create_lidar_3d()
-    lidars_2d = sm.create_lidar_2d()
-    cameras = env.unwrapped.scene["front_cam"]
-    # ROS2 Bridge
-    dm = go2_ros2_bridge.RobotDataManager(env, lidar_sensors_3d=lidars_3d, lidar_sensors_2d=lidars_2d, cameras=cameras, cfg=cfg)
-
-
     print("[INFO]: simulation started")
 
     obs, _ = env.reset()
@@ -128,9 +135,7 @@ def run_simulator(cfg):
     #run simulation
     dt = float(go2_env_cfg.sim.dt * go2_env_cfg.decimation)
 
-    # generate occupancy grid map
-    if cfg.generate_map:
-        generate_nav2_map(cfg)
+
 
 
     while simulation_app.is_running():
