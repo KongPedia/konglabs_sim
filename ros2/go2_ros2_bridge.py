@@ -15,7 +15,7 @@ class RobotDataManager:
         self.lidar_sensors_3d = lidar_sensors_3d
         self.lidar_sensors_2d = lidar_sensors_2d
         self.cameras = cameras
-        
+        self.step_size = 20
         # ROS 2 노드 초기화 (구독자용)
         if not rclpy.ok():
             rclpy.init()
@@ -29,7 +29,6 @@ class RobotDataManager:
 
         self._setup_2d_lidar_publishers()
         
-        # 3. 공통 데이터(Clock 등) 발행용 OmniGraph 설정
         self._setup_global_omnigraph()
 
         self._setup_odom_publishers()
@@ -98,14 +97,17 @@ class RobotDataManager:
                         {
                             og.Controller.Keys.CREATE_NODES: [
                                 ("OnTick", "omni.graph.action.OnTick"),
+                                ("Gate", "isaacsim.core.nodes.IsaacSimulationGate"), 
                                 ("cameraHelperRgb", "isaacsim.ros2.bridge.ROS2CameraHelper"),
                                 ("cameraHelperInfo", "isaacsim.ros2.bridge.ROS2CameraInfoHelper"),
                             ],
                             og.Controller.Keys.CONNECT: [
-                                ("OnTick.outputs:tick", "cameraHelperRgb.inputs:execIn"),
-                                ("OnTick.outputs:tick", "cameraHelperInfo.inputs:execIn"),
+                                ("OnTick.outputs:tick", "Gate.inputs:execIn"),
+                                ("Gate.outputs:execOut", "cameraHelperRgb.inputs:execIn"),
+                                ("Gate.outputs:execOut", "cameraHelperInfo.inputs:execIn"),
                             ],
                             og.Controller.Keys.SET_VALUES: [
+                                ("Gate.inputs:step", self.step_size),
                                 ("cameraHelperRgb.inputs:renderProductPath", render_product_path),
                                 ("cameraHelperRgb.inputs:frameId", frame_id),
                                 ("cameraHelperRgb.inputs:topicName", topic_name),
@@ -128,7 +130,7 @@ class RobotDataManager:
         if self.lidar_sensors_3d is not None:
             for i, annotator in enumerate(self.lidar_sensors_3d):
                 # 1. 렌더 제품 경로 가져오기 (문서의 renderProductPath 입력값)
-                render_product_obj = rep.create.render_product(annotator.GetPath(), resolution=[1024, 64], name="Isaac")
+                render_product_obj = rep.create.render_product(annotator.GetPath(), resolution=[1, 1], name="Isaac")
                 render_product_path = render_product_obj.path
                 # 2. 각 환경별 고유 그래프 경로
                 graph_path = f"/World/Graph/Lidar/Lidar_3d_ROS_Graph_env_{i}"
@@ -141,14 +143,17 @@ class RobotDataManager:
                     {
                         og.Controller.Keys.CREATE_NODES: [
                             ("OnTick", "omni.graph.action.OnTick"),
+                            ("Gate", "isaacsim.core.nodes.IsaacSimulationGate"),
                             ("LidarHelper", "isaacsim.ros2.bridge.ROS2RtxLidarHelper"),
                             ("LidarQoS", "isaacsim.ros2.bridge.ROS2QoSProfile"),
                         ],
                         og.Controller.Keys.CONNECT: [
-                            ("OnTick.outputs:tick", "LidarHelper.inputs:execIn"),
+                            ("OnTick.outputs:tick", "Gate.inputs:execIn"),
+                            ("Gate.outputs:execOut", "LidarHelper.inputs:execIn"),
                             ("LidarQoS.outputs:qosProfile", "LidarHelper.inputs:qosProfile"),
                         ],
                         og.Controller.Keys.SET_VALUES: [
+                            ("Gate.inputs:step", self.step_size),
                             ("LidarHelper.inputs:renderProductPath", render_product_path),
                             ("LidarHelper.inputs:topicName", topic_name),
                             ("LidarHelper.inputs:frameId", frame_id),
@@ -166,27 +171,29 @@ class RobotDataManager:
         if self.lidar_sensors_2d is not None:
             for i, annotator in enumerate(self.lidar_sensors_2d):
                 # 1. 렌더 제품 경로 가져오기 (문서의 renderProductPath 입력값)
-                render_product_obj = rep.create.render_product(annotator.GetPath(), resolution=[1024, 64], name="Isaac")
+                render_product_obj = rep.create.render_product(annotator.GetPath(), resolution=[1, 1], name="Isaac")
                 render_product_path = render_product_obj.path
                 # 2. 각 환경별 고유 그래프 경로
                 graph_path = f"/World/Graph/Lidar/Lidar_2d_ROS_Graph_env_{i}"
                 topic_name = f"env{i}/scan"
                 frame_id = f"env{i}/scan_link"
-
                 # 3. OmniGraph 노드 생성 및 설정
                 og.Controller.edit(
                     {"graph_path": graph_path, "evaluator_name": "push"},
                     {
                         og.Controller.Keys.CREATE_NODES: [
                             ("OnTick", "omni.graph.action.OnTick"),
+                            ("Gate", "isaacsim.core.nodes.IsaacSimulationGate"),
                             ("LidarHelper", "isaacsim.ros2.bridge.ROS2RtxLidarHelper"),
                             ("LidarQoS", "isaacsim.ros2.bridge.ROS2QoSProfile"),
                         ],
                         og.Controller.Keys.CONNECT: [
-                            ("OnTick.outputs:tick", "LidarHelper.inputs:execIn"),
+                            ("OnTick.outputs:tick", "Gate.inputs:execIn"),
+                            ("Gate.outputs:execOut", "LidarHelper.inputs:execIn"),
                             ("LidarQoS.outputs:qosProfile", "LidarHelper.inputs:qosProfile"),
                         ],
                         og.Controller.Keys.SET_VALUES: [
+                            ("Gate.inputs:step", self.step_size),
                             ("LidarHelper.inputs:renderProductPath", render_product_path),
                             ("LidarHelper.inputs:topicName", topic_name),
                             ("LidarHelper.inputs:frameId", frame_id),
@@ -313,7 +320,6 @@ class RobotDataManager:
 
 
         if character is not None:
-            # print("character is not none")
             vec3 = go2_ctrl.get_keyboard_cmd()
             # Tensor/Numpy 타입을 Python float으로 명시적 변환 (carb 호환성 확보)
             carb_vec3 = carb.Float3(float(vec3[0]), float(vec3[1]), 0.0)

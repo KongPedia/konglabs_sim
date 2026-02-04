@@ -32,6 +32,7 @@ class Myscene(InteractiveSceneCfg):
     terrain = TerrainImporterCfg(
         prim_path = "/World/ground",
         terrain_type = "plane",
+        visual_material=sim_utils.PreviewSurfaceCfg(diffuse_color=(0.0, 0.0, 0.0), opacity=0.0),
     )
 
     # 로봇 정의
@@ -58,7 +59,7 @@ class Myscene(InteractiveSceneCfg):
         offset=RayCasterCfg.OffsetCfg(pos=(0.0, 0.0, 20.0)),
         ray_alignment="yaw",
         pattern_cfg=patterns.GridPatternCfg(resolution=0.1, size=(1.6, 1.0)), # pattern_cfg
-        debug_vis=True,
+        debug_vis=False,
         mesh_prim_paths=["/World/ground"],
     )
 
@@ -120,7 +121,7 @@ class EventCfg:
         func=mdp.reset_root_state_uniform,
         mode="reset",
         params={
-            "pose_range": {"x": (-0.5, 0.5), "y": (-0.5, 0.5), "yaw": (-3.14, 3.14)},
+            "pose_range": {"x": (-0.5, 0.5), "y": (-10.5,-10.0), "yaw": (-3.14, 3.14)},
             "velocity_range": {
                 "x": (-0.5, 0.5),
                 "y": (-0.5, 0.5),

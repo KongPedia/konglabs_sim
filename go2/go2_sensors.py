@@ -12,36 +12,20 @@ class sensor_manager:
         self.cfg = cfg
         self.num_envs = cfg.num_envs
 
-    def create_camera(self):
-        cameras= []
-        for env_idx in range(self.num_envs):
-
-            camera_cfg = CameraCfg(
-                prim_path=f"/World/envs/env_{env_idx}/Go2/base/front_cam",
-                update_period=0.0,                      
-                data_types=["rgb"],
-                spawn=sim_utils.PinholeCameraCfg(),             
-                width=320,    
-                height=240,                                      
-                offset=CameraCfg.OffsetCfg(
-                    pos=tuple(self.cfg.sensor.camera.pos),                         
-                    rot=tuple(self.cfg.sensor.camera.rot),                    
-                    convention="world"                             
-                ),
-            )
-
-            camera = Camera(cfg=camera_cfg)
-
-            cameras.append(camera)
-
-        return cameras
-
 
 
     def create_lidar_3d(self):
         lidar_sensors_3d = []
 
-        sensor_attributes = {'omni:sensor:Core:scanRateBaseHz': 20}
+        sensor_attributes = {
+            'omni:sensor:Core:scanRateBaseHz': 10,
+            'omni:sensor:Core:farRangeM': 10.0, 
+            'omni:sensor:Core:patternFiringRateHz': 360,
+            'omni:sensor:Core:validStartAzimuthDeg': 270.0,
+            'omni:sensor:Core:validEndAzimuthDeg': 90.0,
+            'omni:sensor:Core:tiledSubSampling': 8,
+        
+        }
 
         for env_idx in range(self.num_envs):
             parent_path = f"/World/envs/env_{env_idx}/Go2/base"
@@ -53,7 +37,7 @@ class sensor_manager:
                 orientation=Gf.Quatd(*self.cfg.sensor.lidar.rot),
                 path="lidar_3d",
                 parent=parent_path,
-                config="Example_Rotary",
+                config="HESAI_XT32_SD10",
                 **sensor_attributes,
             )
         
@@ -65,7 +49,7 @@ class sensor_manager:
     def create_lidar_2d(self):
         lidar_sensors_2d = []
 
-        sensor_attributes = {'omni:sensor:Core:scanRateBaseHz': 20}
+        sensor_attributes = {'omni:sensor:Core:scanRateBaseHz': 10}
 
         for env_idx in range(self.num_envs):
             parent_path = f"/World/envs/env_{env_idx}/Go2/base"

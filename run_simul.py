@@ -15,8 +15,9 @@ parser = argparse.ArgumentParser(description="Unitree go2 ros2 setup")
 AppLauncher.add_app_launcher_args(parser)
 # parse the arguments
 args_cli = parser.parse_args()
-args_cli.enable_cameras = True
+
 args_cli.headless = False 
+args_cli.enable_cameras = True
 args_cli.kit_args = "--/renderer/multiGpu/enabled=true --/renderer/multiGpu/maxGpuCount=2 --enable isaacsim.asset.gen.omap" 
 
 # launch omniverse app
@@ -59,8 +60,8 @@ FILE_PATH = os.path.join(os.path.dirname(__file__), "config")
 @hydra.main(config_path=FILE_PATH, config_name="sim", version_base=None)
 def run_simulator(cfg):
     go2_env_cfg = Go2RLEnvCfg()
-    go2_env_cfg.decimation = math.ceil(1./go2_env_cfg.sim.dt/cfg.freq)
-    go2_env_cfg.sim.render_interval = go2_env_cfg.decimation * 2
+    go2_env_cfg.decimation = 4
+    go2_env_cfg.sim.render_interval = go2_env_cfg.decimation
     go2_env_cfg.scene.num_envs = cfg.num_envs
     go2_ctrl.init_base_vel_cmd(cfg.num_envs)
     
@@ -84,8 +85,8 @@ def run_simulator(cfg):
         sim_env.create_full_warehouse_env() # full warehouse
     elif (cfg.env_name == "office"):
         sim_env.create_office_env() # office
-    elif (cfg.env_name == "turret"):
-        sim_env.create_turret_env() # turret
+    elif (cfg.env_name == "stage1"):
+        sim_env.create_stage1_env() # stage1
     elif (cfg.env_name == "warehouse_custom"):
         sim_env.create_warehouse_custom_env() # warehouse_custom
     elif (cfg.env_name == "konglabs"):
@@ -130,25 +131,20 @@ def run_simulator(cfg):
 
     obs, _ = env.reset()
 
-
-
     #run simulation
     dt = float(go2_env_cfg.sim.dt * go2_env_cfg.decimation)
-
-
-
-
+    
     while simulation_app.is_running():
         start_time = time.time()
 
         with torch.inference_mode():
                 
-                actions = policy(obs)
+            actions = policy(obs)
 
-                obs, _, _, _ = env.step(actions)
+            obs, _, _, _ = env.step(actions)
 
 
-        dm.update(character)
+            dm.update(character)
         elapsed_time = time.time() - start_time
 
         sleep_time = dt - (elapsed_time)
@@ -162,6 +158,5 @@ def run_simulator(cfg):
     simulation_app.close()
 
 if __name__ == "__main__":
-    # GS_import()
     run_simulator()
     
