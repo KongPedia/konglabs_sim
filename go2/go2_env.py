@@ -32,7 +32,7 @@ class Myscene(InteractiveSceneCfg):
     terrain = TerrainImporterCfg(
         prim_path = "/World/ground",
         terrain_type = "plane",
-        visual_material=sim_utils.PreviewSurfaceCfg(diffuse_color=(0.0, 0.0, 0.0), opacity=0.0),
+        visual_material=sim_utils.PreviewSurfaceCfg(diffuse_color=(0.0, 0.0, 0.0), opacity=1.0),
     )
 
     # 로봇 정의
@@ -75,7 +75,7 @@ class CommandsCfg:
     velocity_commands = mdp.UniformVelocityCommandCfg(
         asset_name="go2",
         resampling_time_range=(0.0, 0.0),
-        debug_vis=True,
+        debug_vis=False,
         ranges=mdp.UniformVelocityCommandCfg.Ranges(
             lin_vel_x=(0.0, 0.0), lin_vel_y=(0.0, 0.0), ang_vel_z=(0.0, 0.0), heading=(0, 0)
         ),
@@ -121,7 +121,7 @@ class EventCfg:
         func=mdp.reset_root_state_uniform,
         mode="reset",
         params={
-            "pose_range": {"x": (-0.5, 0.5), "y": (-10.5,-10.0), "yaw": (-3.14, 3.14)},
+            "pose_range": {"x": (-5.5, -4.5), "y": (-5.5, -5.0), "yaw": (-3.14, 3.14)},
             "velocity_range": {
                 "x": (-0.5, 0.5),
                 "y": (-0.5, 0.5),
@@ -186,7 +186,7 @@ class Go2RLEnvCfg(ManagerBasedRLEnvCfg):
 
         # simulation settings
         self.sim.dt = 0.005
-        self.sim.render_interval = self.decimation 
+        self.sim.render_interval = self.decimation
         self.sim.render.antialiasing_mode = None
         self.viewer.resolution = (640, 360)
         if self.scene.height_scanner is not None:

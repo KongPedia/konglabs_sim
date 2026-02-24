@@ -60,8 +60,8 @@ FILE_PATH = os.path.join(os.path.dirname(__file__), "config")
 @hydra.main(config_path=FILE_PATH, config_name="sim", version_base=None)
 def run_simulator(cfg):
     go2_env_cfg = Go2RLEnvCfg()
-    go2_env_cfg.decimation = 4
-    go2_env_cfg.sim.render_interval = go2_env_cfg.decimation
+    go2_env_cfg.decimation = 5
+    go2_env_cfg.sim.render_interval = go2_env_cfg.decimation * 2
     go2_env_cfg.scene.num_envs = cfg.num_envs
     go2_ctrl.init_base_vel_cmd(cfg.num_envs)
     
@@ -74,19 +74,19 @@ def run_simulator(cfg):
 
 
 
-    # # Simulation environment
+    # Simulation environment
     if (cfg.env_name == "warehouse"):
         sim_env.create_warehouse_env() # warehouse
-    elif (cfg.env_name == "warehouse-forklifts"):
-        sim_env.create_warehouse_forklifts_env() # warehouse forklifts
+    elif (cfg.env_name == "lit_tower_4f"):
+        sim_env.create_warehouse_lit_tower_4f_env() # warehouse forklifts
     elif (cfg.env_name == "warehouse-shelves"):
         sim_env.create_warehouse_shelves_env() # warehouse shelves
     elif (cfg.env_name == "full-warehouse"):
         sim_env.create_full_warehouse_env() # full warehouse
     elif (cfg.env_name == "office"):
         sim_env.create_office_env() # office
-    elif (cfg.env_name == "stage1"):
-        sim_env.create_stage1_env() # stage1
+    elif (cfg.env_name == "stage"):
+        sim_env.create_stage_env() # stage1
     elif (cfg.env_name == "warehouse_custom"):
         sim_env.create_warehouse_custom_env() # warehouse_custom
     elif (cfg.env_name == "konglabs"):
@@ -142,7 +142,6 @@ def run_simulator(cfg):
             actions = policy(obs)
 
             obs, _, _, _ = env.step(actions)
-
 
             dm.update(character)
         elapsed_time = time.time() - start_time

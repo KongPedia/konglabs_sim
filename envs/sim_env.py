@@ -22,12 +22,13 @@ def create_warehouse_env():
     asset_path = assets_root_path+"/Isaac/Environments/Simple_Warehouse/warehouse.usd"
     prim.GetReferences().AddReference(asset_path)
 
-def create_warehouse_forklifts_env():
-    assets_root_path = nucleus_utils.get_assets_root_path()
-    prim = get_prim_at_path("/World/Warehouse")
-    prim = define_prim("/World/Warehouse", "Xform")
-    asset_path = assets_root_path+"/Isaac/Environments/Simple_Warehouse/warehouse_with_forklifts.usd"
-    prim.GetReferences().AddReference(asset_path)
+def create_warehouse_lit_tower_4f_env():
+    asset_usd_path = "/home/loe/Downloads/digital_twin/lit_tower_4f/lit_tower_4f.usd"
+    prim_path = "/World/lit_tower_4f"
+    prim = get_prim_at_path(prim_path)
+    if not prim.IsValid():
+        prim = define_prim(prim_path, "Xform")
+    prim.GetReferences().AddReference(asset_usd_path)
 
 def create_warehouse_shelves_env():
     assets_root_path = nucleus_utils.get_assets_root_path()
@@ -58,13 +59,13 @@ def create_office_env():
     prim.GetReferences().AddReference(asset_path)
 
 
-def create_turret_env():
-    turret_usd_path = "/home/loe/workspace/github/SpotATS_ws/ATS_IsaacSim/Main/ATS_Enviroment/ATS_with_omnigraph.usd" 
-    prim_path = "/World/ATS"
+def create_stage_env():
+    asset_usd_path = "/home/loe/Downloads/digital_twin/outdoor_stage/outdoor_stage2.usd" 
+    prim_path = "/World/stage"
     prim = get_prim_at_path(prim_path)
     if not prim.IsValid():
         prim = define_prim(prim_path, "Xform")
-    prim.GetReferences().AddReference(turret_usd_path)
+    prim.GetReferences().AddReference(asset_usd_path)
 
 
 def create_warehouse_custom_env():
