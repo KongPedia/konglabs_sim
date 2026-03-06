@@ -18,12 +18,12 @@ class sensor_manager:
         lidar_sensors_3d = []
 
         sensor_attributes = {
-            'omni:sensor:Core:scanRateBaseHz': 10,
+            'omni:sensor:Core:scanRateBaseHz': 30,
             'omni:sensor:Core:farRangeM': 10.0, 
-            'omni:sensor:Core:patternFiringRateHz': 360,
-            'omni:sensor:Core:validStartAzimuthDeg': 270.0,
-            'omni:sensor:Core:validEndAzimuthDeg': 90.0,
-            'omni:sensor:Core:tiledSubSampling': 8,
+            # 'omni:sensor:Core:patternFiringRateHz': 90,
+            # 'omni:sensor:Core:validStartAzimuthDeg': 270.0,
+            # 'omni:sensor:Core:validEndAzimuthDeg': 90.0,
+            # 'omni:sensor:Core:tiledSubSampling': 32,
         
         }
 

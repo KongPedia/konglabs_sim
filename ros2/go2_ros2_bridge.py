@@ -11,13 +11,27 @@ from sensor_msgs.msg import JointState
 from rclpy.time import Time
 
 class RobotDataManager:
-    def __init__(self, env, lidar_sensors_3d, lidar_sensors_2d, cameras, cfg):
+    def __init__(self, env, lidar_sensors_3d, lidar_sensors_2d, cameras, cfg, global_turrets=None):
         self.env = env
         self.num_envs = cfg.num_envs
         self.lidar_sensors_3d = lidar_sensors_3d
         self.lidar_sensors_2d = lidar_sensors_2d
         self.cameras = cameras
         self.step_size = 20
+        self.global_turrets = global_turrets
+        self.turret_targets = None
+        self.turret_joint_pubs = []
+        self.turret_joint_subs = []
+        self.turret_joint_names = []
+        self._turret_joint_name_to_idx = {}
+
+        if self.global_turrets is not None:
+            self.turret_targets = self.global_turrets.data.joint_pos.clone()
+            self.turret_joint_names = self._get_turret_joint_names()
+            self._turret_joint_name_to_idx = {
+                name: idx for idx, name in enumerate(self.turret_joint_names)
+            }
+
         # ROS 2 노드 초기화 (구독자용)
         if not rclpy.ok():
             rclpy.init()
@@ -39,6 +53,8 @@ class RobotDataManager:
         
         self._setup_joint_state_publishers()
 
+        self._setup_turret_pubs_subs()
+
 
     def _setup_joint_state_publishers(self):
             self.joint_pubs = []
@@ -50,13 +66,64 @@ class RobotDataManager:
                 self.joint_pubs.append(pub)
                 print(f"[Bridge] Created JointState publisher: {topic_name}")
 
+    def _get_turret_joint_names(self):
+        if self.global_turrets is None:
+            return []
+        joint_names = getattr(self.global_turrets.data, "joint_names", None)
+        if joint_names is None:
+            joint_names = getattr(self.global_turrets, "joint_names", [])
+        return list(joint_names)
+
+    def _setup_turret_pubs_subs(self):
+        """터렛용 joint_state 발행 및 joint_command 구독 설정"""
+        if self.global_turrets is None:
+            return
+
+        num_turrets = int(
+            getattr(self.global_turrets, "num_instances", self.global_turrets.data.joint_pos.shape[0])
+        )
+
+        for i in range(num_turrets):
+            pub_topic = f"/turret{i}/joint_states"
+            pub = self.node.create_publisher(JointState, pub_topic, 10)
+            self.turret_joint_pubs.append(pub)
+
+            sub_topic = f"/turret{i}/joint_command"
+            sub = self.node.create_subscription(
+                JointState,
+                sub_topic,
+                lambda msg, idx=i: self._turret_cmd_callback(msg, idx),
+                10,
+            )
+            self.turret_joint_subs.append(sub)
+
+        print(f"[Bridge] Created Publishers/Subscribers for {num_turrets} Turrets.")
+
+    def _turret_cmd_callback(self, msg, idx):
+        """수신된 turret 명령을 내부 텐서(turret_targets)에 반영"""
+        if self.turret_targets is None:
+            return
+        if idx >= self.turret_targets.shape[0]:
+            return
+
+        if len(msg.name) > 0:
+            for name, pos in zip(msg.name, msg.position):
+                j_idx = self._turret_joint_name_to_idx.get(name)
+                if j_idx is not None:
+                    self.turret_targets[idx, j_idx] = float(pos)
+            return
+
+        max_len = min(len(msg.position), self.turret_targets.shape[1])
+        for j_idx in range(max_len):
+            self.turret_targets[idx, j_idx] = float(msg.position[j_idx])
+
 
     def _setup_cmd_vel_subscribers(self):
         """각 환경별 cmd_vel 토픽 구독 설정"""
         self._velocity_subs = []
         for i in range(self.num_envs):
 
-            topic_name = f"robot{i}/cmd_vel_out"
+            topic_name = f"robot{i}/cmd_vel"
             # 클로저를 사용하여 인덱스 i를 캡처
             sub = self.node.create_subscription(
                 Twist,
@@ -319,6 +386,26 @@ class RobotDataManager:
 
             except Exception as e:
                 pass
+
+        if self.global_turrets is not None and len(self.turret_joint_pubs) > 0:
+            turret_data = self.global_turrets.data
+            if len(self.turret_joint_names) == 0:
+                self.turret_joint_names = self._get_turret_joint_names()
+            for i, pub in enumerate(self.turret_joint_pubs):
+                if i >= turret_data.joint_pos.shape[0]:
+                    break
+                try:
+                    msg = JointState()
+                    msg.header.stamp = ros_time_msg
+                    msg.header.frame_id = f"turret{i}_base_link"
+                    msg.name = self.turret_joint_names
+                    msg.position = turret_data.joint_pos[i].tolist()
+                    msg.velocity = turret_data.joint_vel[i].tolist()
+                    if hasattr(turret_data, "applied_torque"):
+                        msg.effort = turret_data.applied_torque[i].tolist()
+                    pub.publish(msg)
+                except Exception:
+                    pass
 
 
         if character is not None:

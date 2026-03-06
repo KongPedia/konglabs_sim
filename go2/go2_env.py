@@ -6,6 +6,7 @@ from isaaclab.sensors.ray_caster import patterns
 from isaaclab.utils import configclass
 from isaaclab_assets.robots.unitree import UNITREE_GO2_CFG  # isort:skip
 from isaaclab.assets import ArticulationCfg, AssetBaseCfg
+from isaaclab.actuators import ImplicitActuatorCfg
 import isaaclab.sim as sim_utils
 import isaaclab.envs.mdp as mdp
 from isaaclab.envs import ManagerBasedRLEnvCfg
@@ -25,18 +26,62 @@ import yaml, os
 import torch
 import go2.go2_ctrl as go2_ctrl
 
+def setup_global_turrets(cfg):
+    """
+    sim.yaml의 설정 정보를 읽어 지정된 절대 경로(/World/Turret_i)에 터렛을 스폰합니다.
+    """
+    # 1. 현재 환경 이름(stage)을 기반으로 터렛 설정 블록 가져오기
+    env_name = cfg.env_name
+    turret_cfg = cfg.envs[env_name].turret
+
+    # 2. 터렛 활성화 여부 확인
+    if not turret_cfg.enabled:
+        print("[INFO] Turret spawning is disabled in sim.yaml.")
+        return
+
+    usd_path = str(turret_cfg.usd_path)
+    instances = turret_cfg.instances
+    
+    print(f"[INFO] Spawning {len(instances)} global turrets from {usd_path}...")
+
+    # 3. YAML에 정의된 인스턴스 배열(instances)을 순회하며 스폰
+    for i, inst in enumerate(instances):
+        # YAML의 리스트 값을 Isaac Lab Spawner가 요구하는 Python Tuple(float) 형태로 변환
+        pos = tuple(float(v) for v in inst.pos)
+        rot = tuple(float(v) for v in inst.rot)     # quaternion [w, x, y, z]
+        scale = tuple(float(v) for v in inst.scale)
+
+        # 4. 글로벌 맵 상의 절대 경로 지정 (RL 환경 복제 루프에서 제외됨)
+        prim_path = f"/World/Turret_{i}"
+
+        # 5. Isaac Lab의 UsdFileCfg를 사용하여 에셋 스폰 [2]
+        spawn_cfg = sim_utils.UsdFileCfg(
+            usd_path=usd_path,
+            scale=scale,
+        )
+        
+        sim_utils.spawn_from_usd(
+            prim_path=prim_path,
+            cfg=spawn_cfg,
+            translation=pos,
+            orientation=rot,
+        )
+
+        print(f"  -> Spawned Turret_{i} at {prim_path} | Pos: {pos}")
+
 
 @configclass
 class Myscene(InteractiveSceneCfg):
     # 지형 정의
     terrain = TerrainImporterCfg(
         prim_path = "/World/ground",
-        terrain_type = "plane",
-        visual_material=sim_utils.PreviewSurfaceCfg(diffuse_color=(0.0, 0.0, 0.0), opacity=1.0),
+        terrain_type = "usd",
+        usd_path="/home/loe/workspace/github/konglabs_sim/models/USD/simple_plane.usd",
     )
 
     # 로봇 정의
     go2: ArticulationCfg = UNITREE_GO2_CFG.replace(prim_path="{ENV_REGEX_NS}/Go2", collision_group = -1)
+
     filter_collisions=False
 
     front_cam = CameraCfg(
@@ -196,7 +241,7 @@ class Go2RLEnvCfg(ManagerBasedRLEnvCfg):
 
 
 def go2_rl_env(env_cfg,cfg):
-
+    setup_global_turrets(cfg)
     env = gym.make("Isaac-Velocity-Rough-Unitree-Go2-v0", cfg=env_cfg, render_mode="rgb_array")
     with open(cfg.agent_cfg_path, 'r') as f:
         unitree_go2_rough_cfg = yaml.safe_load(f)
