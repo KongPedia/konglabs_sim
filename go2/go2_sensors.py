@@ -20,13 +20,7 @@ class sensor_manager:
         sensor_attributes = {
             'omni:sensor:Core:scanRateBaseHz': 30,
             'omni:sensor:Core:farRangeM': 10.0, 
-            # 'omni:sensor:Core:patternFiringRateHz': 90,
-            # 'omni:sensor:Core:validStartAzimuthDeg': 270.0,
-            # 'omni:sensor:Core:validEndAzimuthDeg': 90.0,
-            # 'omni:sensor:Core:tiledSubSampling': 32,
-        
         }
-
         for env_idx in range(self.num_envs):
             parent_path = f"/World/envs/env_{env_idx}/Go2/base"
 
@@ -40,8 +34,6 @@ class sensor_manager:
                 config="HESAI_XT32_SD10",
                 **sensor_attributes,
             )
-        
-
             lidar_sensors_3d.append(sensor)
 
         return lidar_sensors_3d

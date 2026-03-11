@@ -11,11 +11,9 @@ import omni.usd
 
 def generate_nav2_map(cfg):
     print("[INFO] Generating Occupancy Map using Generator API...")
-    
     # 1. 파일 경로 설정
     output_path = getattr(cfg.mapping, "output_path", os.getcwd())
     map_name = "nav2_map"
-    
     pgm_filename = f"{map_name}.png"
     yaml_filename = f"{map_name}.yaml"
     full_pgm_path = os.path.join(output_path, pgm_filename)

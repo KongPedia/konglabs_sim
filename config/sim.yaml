@@ -2,10 +2,8 @@ defaults:
   - _self_
 
 num_envs: 10
-camera_follow: True
 generate_map: False
 env_name: warehouse
-
 
 sensor:
   camera:

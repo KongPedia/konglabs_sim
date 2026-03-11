@@ -18,7 +18,7 @@ args_cli = parser.parse_args()
 
 args_cli.headless = False 
 args_cli.enable_cameras = True
-args_cli.kit_args = "--/renderer/multiGpu/enabled=true --/renderer/multiGpu/maxGpuCount=2 --enable isaacsim.asset.gen.omap" 
+args_cli.kit_args = "--enable isaacsim.asset.gen.omap" 
 
 # launch omniverse app
 app_launcher = AppLauncher(args_cli)
@@ -29,7 +29,7 @@ simulation_app = app_launcher.app
 import omni.kit.app
 ext_manager = omni.kit.app.get_app().get_extension_manager()
 
-# 확장 프로그램 활성화 (최신 ID 사용 권장)
+# 확장 프로그램 활성화
 extension_id = "isaacsim.ros2.bridge" 
 ext_manager.set_extension_enabled_immediate(extension_id, True)
 ext_manager.set_extension_enabled_immediate("omni.anim.graph.core", True)
@@ -56,12 +56,14 @@ import envs.sim_env as sim_env
 from isaaclab.assets import Articulation, ArticulationCfg
 from isaaclab.actuators import ImplicitActuatorCfg
 
+
+
 FILE_PATH = os.path.join(os.path.dirname(__file__), "config")
 @hydra.main(config_path=FILE_PATH, config_name="sim", version_base=None)
 def run_simulator(cfg):
     go2_env_cfg = Go2RLEnvCfg()
     go2_env_cfg.decimation = 5
-    go2_env_cfg.sim.render_interval = go2_env_cfg.decimation 
+    go2_env_cfg.sim.render_interval = go2_env_cfg.decimation * 2
     go2_env_cfg.scene.num_envs = cfg.num_envs
     go2_ctrl.init_base_vel_cmd(cfg.num_envs)
     
